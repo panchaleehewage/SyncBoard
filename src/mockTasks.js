@@ -1,34 +1,26 @@
 export const mockTasks = [
   {
     id: 1,
-    title: "Design Database Schema",
+    title: "Design User Profile Page",
     assignee: "Alice",
     dueDate: "2026-10-15",
-    tags: ["Backend", "Planning"],
+    tags: ["Frontend"],
     status: "To Do"
   },
   {
     id: 2,
-    title: "Create Login UI",
+    title: "Setup MongoDB Schema",
     assignee: "Bob",
-    dueDate: "2026-07-01",
-    tags: ["Frontend", "UI"],
+    dueDate: "2026-07-01", // Intentionally past due
+    tags: ["Backend", "Database"],
     status: "To Do"
   },
   {
     id: 3,
-    title: "Setup Vite Project",
-    assignee: "You",
+    title: "Post Management Endpoints",
+    assignee: "StudentDev",
     dueDate: "2026-12-05",
-    tags: ["Configuration"],
+    tags: ["API"],
     status: "In Progress"
-  },
-  {
-    id: 4,
-    title: "Requirement Gathering",
-    assignee: "Alice",
-    dueDate: "2026-06-20",
-    tags: ["Documentation"],
-    status: "Done"
   }
 ];
