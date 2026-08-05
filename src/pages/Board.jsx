@@ -7,13 +7,12 @@ export default function Board({ currentUser }) {
   const { boardId } = useParams();
   const board = mockBoards.find(b => b.id === parseInt(boardId));
   
-  // Filter tasks to only show ones belonging to this board
-  const [tasks, setTasks] = useState(mockTasks.filter(t => t.boardId === board.id));
+  const [tasks, setTasks] = useState(mockTasks.filter(t => t.boardId === board?.id));
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
   const [newTaskAssignee, setNewTaskAssignee] = useState(currentUser || '');
-  const [newTaskTag, setNewTaskTag] = useState('');
+  const [newTaskTags, setNewTaskTags] = useState([]); // Now an array
 
   if (!currentUser) return <div className="alert">Please log in to view this board.</div>;
   if (!board) return <div className="alert">Board not found.</div>;
@@ -22,9 +21,18 @@ export default function Board({ currentUser }) {
     setTasks(tasks.map(task => task.id === id ? { ...task, status: newStatus } : task));
   };
 
+  // Adds or removes tags from the array when a checkbox is clicked
+  const handleTagToggle = (tag) => {
+    setNewTaskTags(prevTags => 
+      prevTags.includes(tag) 
+        ? prevTags.filter(t => t !== tag) 
+        : [...prevTags, tag]
+    );
+  };
+
   const handleAddTask = (e) => {
     e.preventDefault();
-    if (!newTaskTitle || !newTaskDate || !newTaskAssignee || !newTaskTag) return;
+    if (!newTaskTitle || !newTaskDate || !newTaskAssignee) return;
 
     const newTask = {
       id: Date.now(),
@@ -32,13 +40,14 @@ export default function Board({ currentUser }) {
       title: newTaskTitle,
       assignee: newTaskAssignee,
       dueDate: newTaskDate,
-      tags: [newTaskTag],
+      tags: newTaskTags.length > 0 ? newTaskTags : ["General"], // Fallback if no tags selected
       status: "To Do"
     };
 
     setTasks([...tasks, newTask]);
     setNewTaskTitle('');
     setNewTaskDate('');
+    setNewTaskTags([]); // Reset tags
   };
 
   const columns = ['To Do', 'In Progress', 'Done'];
@@ -50,27 +59,36 @@ export default function Board({ currentUser }) {
         <span className="leader-badge">Leader: {board.leader}</span>
       </div>
 
-      <form className="add-task-form" onSubmit={handleAddTask}>
-        <input type="text" placeholder="Task title..." value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} />
-        <input type="date" value={newTaskDate} onChange={(e) => setNewTaskDate(e.target.value)} />
+      <form className="add-task-form wide-form" onSubmit={handleAddTask}>
+        <div className="form-row">
+          <input type="text" placeholder="What needs to be done?" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} />
+          <input type="date" value={newTaskDate} onChange={(e) => setNewTaskDate(e.target.value)} />
+          <select className="wide-select" value={newTaskAssignee} onChange={(e) => setNewTaskAssignee(e.target.value)}>
+            <option value="" disabled>Assign to...</option>
+            {board.members.map(member => (
+              <option key={member} value={member}>{member}</option>
+            ))}
+          </select>
+        </div>
         
-        {/* Dropdown for Assignee based on board members */}
-        <select value={newTaskAssignee} onChange={(e) => setNewTaskAssignee(e.target.value)}>
-          <option value="" disabled>Assign to...</option>
-          {board.members.map(member => (
-            <option key={member} value={member}>{member}</option>
-          ))}
-        </select>
+        {/* Checkbox Group for Multiple Tags */}
+        <div className="tags-selection">
+          <span className="tags-label">Select Tags:</span>
+          <div className="checkbox-group">
+            {board.tags.map(tag => (
+              <label key={tag} className="tag-checkbox">
+                <input 
+                  type="checkbox" 
+                  checked={newTaskTags.includes(tag)}
+                  onChange={() => handleTagToggle(tag)}
+                />
+                {tag}
+              </label>
+            ))}
+          </div>
+        </div>
 
-        {/* Dropdown for Tags based on board tags */}
-        <select value={newTaskTag} onChange={(e) => setNewTaskTag(e.target.value)}>
-          <option value="" disabled>Select Tag...</option>
-          {board.tags.map(tag => (
-            <option key={tag} value={tag}>{tag}</option>
-          ))}
-        </select>
-
-        <button type="submit">Add Task</button>
+        <button type="submit" className="btn-primary w-100">Add Task</button>
       </form>
 
       <div className="board">
