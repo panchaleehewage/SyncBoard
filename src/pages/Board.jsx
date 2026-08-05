@@ -8,11 +8,12 @@ export default function Board({ currentUser }) {
   const board = mockBoards.find(b => b.id === parseInt(boardId));
   
   const [tasks, setTasks] = useState(mockTasks.filter(t => t.boardId === board?.id));
+  const [showTaskModal, setShowTaskModal] = useState(false); // Controls the popup
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
   const [newTaskAssignee, setNewTaskAssignee] = useState(currentUser || '');
-  const [newTaskTags, setNewTaskTags] = useState([]); // Now an array
+  const [newTaskTags, setNewTaskTags] = useState([]);
 
   if (!currentUser) return <div className="alert">Please log in to view this board.</div>;
   if (!board) return <div className="alert">Board not found.</div>;
@@ -21,7 +22,6 @@ export default function Board({ currentUser }) {
     setTasks(tasks.map(task => task.id === id ? { ...task, status: newStatus } : task));
   };
 
-  // Adds or removes tags from the array when a checkbox is clicked
   const handleTagToggle = (tag) => {
     setNewTaskTags(prevTags => 
       prevTags.includes(tag) 
@@ -40,14 +40,15 @@ export default function Board({ currentUser }) {
       title: newTaskTitle,
       assignee: newTaskAssignee,
       dueDate: newTaskDate,
-      tags: newTaskTags.length > 0 ? newTaskTags : ["General"], // Fallback if no tags selected
+      tags: newTaskTags.length > 0 ? newTaskTags : ["General"],
       status: "To Do"
     };
 
     setTasks([...tasks, newTask]);
     setNewTaskTitle('');
     setNewTaskDate('');
-    setNewTaskTags([]); // Reset tags
+    setNewTaskTags([]);
+    setShowTaskModal(false); // Close the modal after adding
   };
 
   const columns = ['To Do', 'In Progress', 'Done'];
@@ -55,41 +56,77 @@ export default function Board({ currentUser }) {
   return (
     <div className="board-page">
       <div className="board-header">
-        <h2>{board.title}</h2>
-        <span className="leader-badge">Leader: {board.leader}</span>
+        <div>
+          <h2>{board.title}</h2>
+          <span className="leader-badge" style={{marginTop: '8px', display: 'inline-block'}}>
+            Leader: {board.leader}
+          </span>
+        </div>
+        {/* Trigger Button */}
+        <button className="btn-primary" onClick={() => setShowTaskModal(true)}>+ Add Task</button>
       </div>
 
-      <form className="add-task-form wide-form" onSubmit={handleAddTask}>
-        <div className="form-row">
-          <input type="text" placeholder="What needs to be done?" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} />
-          <input type="date" value={newTaskDate} onChange={(e) => setNewTaskDate(e.target.value)} />
-          <select className="wide-select" value={newTaskAssignee} onChange={(e) => setNewTaskAssignee(e.target.value)}>
-            <option value="" disabled>Assign to...</option>
-            {board.members.map(member => (
-              <option key={member} value={member}>{member}</option>
-            ))}
-          </select>
-        </div>
-        
-        {/* Checkbox Group for Multiple Tags */}
-        <div className="tags-selection">
-          <span className="tags-label">Select Tags:</span>
-          <div className="checkbox-group">
-            {board.tags.map(tag => (
-              <label key={tag} className="tag-checkbox">
+      {/* Task Creation Modal */}
+      {showTaskModal && (
+        <div className="modal-overlay" onClick={() => setShowTaskModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <h2>Add New Task</h2>
+            <form onSubmit={handleAddTask} className="modal-form">
+              <div className="form-group">
+                <label>Task Title</label>
                 <input 
-                  type="checkbox" 
-                  checked={newTaskTags.includes(tag)}
-                  onChange={() => handleTagToggle(tag)}
+                  type="text" 
+                  placeholder="What needs to be done?" 
+                  value={newTaskTitle} 
+                  onChange={(e) => setNewTaskTitle(e.target.value)} 
+                  required 
                 />
-                {tag}
-              </label>
-            ))}
+              </div>
+              
+              <div className="form-group">
+                <label>Due Date</label>
+                <input 
+                  type="date" 
+                  value={newTaskDate} 
+                  onChange={(e) => setNewTaskDate(e.target.value)} 
+                  required 
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Assignee</label>
+                <select value={newTaskAssignee} onChange={(e) => setNewTaskAssignee(e.target.value)} required>
+                  <option value="" disabled>Assign to...</option>
+                  {board.members.map(member => (
+                    <option key={member} value={member}>{member}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="form-group">
+                <label>Tags</label>
+                <div className="checkbox-group" style={{marginTop: '4px'}}>
+                  {board.tags.map(tag => (
+                    <label key={tag} className="tag-checkbox">
+                      <input 
+                        type="checkbox" 
+                        checked={newTaskTags.includes(tag)}
+                        onChange={() => handleTagToggle(tag)}
+                      />
+                      {tag}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn-secondary" onClick={() => setShowTaskModal(false)}>Cancel</button>
+                <button type="submit" className="btn-primary">Add Task</button>
+              </div>
+            </form>
           </div>
         </div>
-
-        <button type="submit" className="btn-primary w-100">Add Task</button>
-      </form>
+      )}
 
       <div className="board">
         {columns.map(col => (
