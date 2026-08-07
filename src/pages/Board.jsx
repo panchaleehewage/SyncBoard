@@ -2,6 +2,7 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { mockBoards, mockTasks } from '../mockData';
 import TaskCard from '../components/TaskCard';
+let nextTaskId = 10000;
 
 export default function Board({ currentUser }) {
   const { boardId } = useParams();
@@ -35,7 +36,7 @@ export default function Board({ currentUser }) {
     if (!newTaskTitle || !newTaskDate || !newTaskAssignee) return;
 
     const newTask = {
-      id: Date.now(),
+      id: nextTaskId++,
       boardId: board.id,
       title: newTaskTitle,
       assignee: newTaskAssignee,
