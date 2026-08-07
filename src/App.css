@@ -144,3 +144,63 @@ input:focus, select:focus { border-color: var(--todo); box-shadow: 0 0 0 3px rgb
 .checkbox-group { display: flex; flex-wrap: wrap; gap: 12px; }
 .tag-checkbox { font-size: 0.85rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .w-100 { width: 100%; }
+
+/* --- Theme Variables --- */
+:root {
+  --bg: #f8fafc;
+  --text: #1e293b;
+  --text-light: #64748b;
+  --border: #e2e8f0;
+  --card-bg: white;
+  --primary: #0f172a;
+  --primary-hover: #334155;
+  --todo: #3b82f6;
+  --danger: #ef4444;
+}
+
+body.dark-mode {
+  --bg: #0f172a;
+  --text: #f1f5f9;
+  --text-light: #94a3b8;
+  --border: #334155;
+  --card-bg: #1e293b;
+  --primary: #1e293b;
+  --primary-hover: #334155;
+}
+
+body { background: var(--bg); color: var(--text); transition: background 0.3s; margin: 0; }
+.task-card, .board-tile, .modal-content, input, select { background: var(--card-bg); color: var(--text); border-color: var(--border); }
+
+/* --- Layout & Header --- */
+.app-container { max-width: 95%; margin: 0 auto; padding: 0 20px 20px 20px; } /* Removed top padding */
+
+.main-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 16px 30px; 
+  margin: 0 -20px 30px -20px; /* Stretches edge to edge */
+  background: var(--primary); color: white;
+}
+.logo { font-size: 1.5rem; font-weight: bold; text-decoration: none; color: white; }
+.header-actions { display: flex; align-items: center; gap: 20px; }
+.theme-toggle { background: transparent; border: none; font-size: 1.2rem; cursor: pointer; }
+
+/* User Controls (Avatar Style) */
+.user-controls { display: flex; align-items: center; gap: 12px; }
+.user-avatar { background: var(--todo); color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+.username-display { font-weight: 500; font-size: 0.95rem; }
+
+/* --- Forms & Cards --- */
+/* Right side padding for chevron */
+select { padding: 12px 36px 12px 12px; appearance: auto; } 
+
+/* Fix inconsistent card heights by enforcing a minimum height on the action area */
+.card-actions { margin-top: 16px; display: flex; justify-content: flex-end; min-height: 32px; } 
+
+/* --- Autocomplete Search (For Teammates) --- */
+.selected-members { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.member-tag { background: var(--todo); color: white; padding: 4px 10px; border-radius: 16px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; }
+.member-tag button { background: none; border: none; color: white; font-weight: bold; cursor: pointer; padding: 0; margin: 0; font-size: 0.9rem; }
+.autocomplete-list { list-style: none; padding: 0; margin: 4px 0 0 0; background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; max-height: 150px; overflow-y: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.autocomplete-list li { padding: 10px 14px; cursor: pointer; font-size: 0.9rem; border-bottom: 1px solid var(--border); }
+.autocomplete-list li:hover { background: var(--todo); color: white; }
+.autocomplete-list li:last-child { border-bottom: none; }

@@ -1,4 +1,8 @@
-export const mockUsers = ["StudentDev", "Alice", "Bob"];
+export const mockUsers = [
+  { username: "StudentDev", password: "password123" },
+  { username: "Alice", password: "password123" },
+  { username: "Bob", password: "password123" }
+];
 
 export const mockBoards = [
   { 

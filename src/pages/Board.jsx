@@ -1,5 +1,5 @@
+import { useParams, Navigate } from 'react-router-dom';
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
 import { mockBoards, mockTasks } from '../mockData';
 import TaskCard from '../components/TaskCard';
 
@@ -15,7 +15,7 @@ export default function Board({ currentUser }) {
   const [newTaskAssignee, setNewTaskAssignee] = useState(currentUser || '');
   const [newTaskTags, setNewTaskTags] = useState([]);
 
-  if (!currentUser) return <div className="alert">Please log in to view this board.</div>;
+  if (!currentUser) return <Navigate to="/" replace />;
   if (!board) return <div className="alert">Board not found.</div>;
 
   const moveTask = (id, newStatus) => {

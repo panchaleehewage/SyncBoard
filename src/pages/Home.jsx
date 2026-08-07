@@ -5,28 +5,44 @@ import { mockBoards, mockUsers } from '../mockData';
 export default function Home({ currentUser }) {
   const [boards, setBoards] = useState(mockBoards);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  
+  // States for the new teammate search feature
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState([]);
 
   if (!currentUser) {
     return (
       <div className="landing-page">
         <h1>Welcome to Syncboard</h1>
-        <p>A collaborative Kanban task board. Please login or sign up to view your workspaces.</p>
+        <p>Please login or sign up to view your workspaces.</p>
       </div>
     );
   }
+
+  // Filter available users for the search dropdown
+  const availableUsers = mockUsers
+    .map(u => u.username)
+    .filter(u => 
+      u !== currentUser && 
+      u.toLowerCase().includes(searchTerm.toLowerCase()) && 
+      !selectedMembers.includes(u)
+    );
+
+  const addMember = (user) => {
+    setSelectedMembers([...selectedMembers, user]);
+    setSearchTerm(''); // clear search after selecting
+  };
+
+  const removeMember = (user) => {
+    setSelectedMembers(selectedMembers.filter(m => m !== user));
+  };
 
   const handleCreateBoard = (e) => {
     e.preventDefault();
     const title = e.target.boardTitle.value;
     const tagsInput = e.target.boardTags.value;
     
-    // Get multiple selected options from the native select element
-    const selectedMembers = Array.from(e.target.boardMembers.selectedOptions, option => option.value);
-
-    // Automatically make the creator a member, and remove any accidental duplicates
-    const members = Array.from(new Set([currentUser, ...selectedMembers]));
-    
-    // Convert comma-separated tags into a clean array
+    const members = [currentUser, ...selectedMembers];
     const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
 
     const newBoard = {
@@ -39,6 +55,7 @@ export default function Home({ currentUser }) {
 
     setBoards([...boards, newBoard]);
     setShowCreateModal(false);
+    setSelectedMembers([]); // Reset members for next time
   };
 
   const userBoards = boards.filter(b => b.members.includes(currentUser));
@@ -65,7 +82,6 @@ export default function Home({ currentUser }) {
         ))}
       </div>
 
-      {/* Create Workspace Modal Popup */}
       {showCreateModal && (
         <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -75,18 +91,35 @@ export default function Home({ currentUser }) {
                 <label>Workspace Name</label>
                 <input name="boardTitle" type="text" required placeholder="e.g., App Development" />
               </div>
+              
+              {/* New Searchable Teammates Section */}
               <div className="form-group">
-                <label>Select Teammates (Hold Ctrl/Cmd to select multiple)</label>
-                <select name="boardMembers" multiple className="wide-select" style={{height: '100px'}}>
-                  {/* Filter out current user so they don't have to select themselves */}
-                  {mockUsers.filter(u => u !== currentUser).map(user => (
-                    <option key={user} value={user}>{user}</option>
+                <label>Add Teammates</label>
+                <div className="selected-members">
+                  {selectedMembers.map(m => (
+                    <span key={m} className="member-tag">
+                      {m} <button type="button" onClick={() => removeMember(m)}>×</button>
+                    </span>
                   ))}
-                </select>
+                </div>
+                <input 
+                  type="text" 
+                  placeholder="Search by username..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && availableUsers.length > 0 && (
+                  <ul className="autocomplete-list">
+                    {availableUsers.map(user => (
+                      <li key={user} onClick={() => addMember(user)}>{user}</li>
+                    ))}
+                  </ul>
+                )}
               </div>
+
               <div className="form-group">
                 <label>Tags (Comma separated)</label>
-                <input name="boardTags" type="text" placeholder="e.g., Frontend, UI, Urgent" />
+                <input name="boardTags" type="text" placeholder="e.g., Frontend, UI" />
               </div>
               <div className="modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
