@@ -2,6 +2,8 @@ import { useParams, Navigate } from 'react-router-dom';
 import { useState } from 'react';
 import { mockBoards, mockTasks } from '../data/mockData';
 import TaskCard from '../components/TaskCard';
+import Button from '../components/Button';
+import Column from '../components/Column';
 let nextTaskId = 10000;
 
 export default function Board({ currentUser }) {
@@ -64,7 +66,7 @@ export default function Board({ currentUser }) {
           </span>
         </div>
         {/* Trigger Button */}
-        <button className="btn-primary" onClick={() => setShowTaskModal(true)}>+ Add Task</button>
+        <Button variant="primary" onClick={() => setShowTaskModal(true)}>+ Add Task</Button>
       </div>
 
       {/* Task Creation Modal */}
@@ -121,8 +123,8 @@ export default function Board({ currentUser }) {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowTaskModal(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Add Task</button>
+                <Button type="button" variant="secondary" onClick={() => setShowTaskModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary">Add Task</Button>
               </div>
             </form>
           </div>
@@ -130,16 +132,17 @@ export default function Board({ currentUser }) {
       )}
 
       <div className="board">
-        {columns.map(col => (
-          <div key={col} className="column">
-            <h3>{col} <span className="task-count">{tasks.filter(t => t.status === col).length}</span></h3>
-            <div className="task-list">
-              {tasks.filter(t => t.status === col).map(task => (
+        {columns.map(col => {
+          const colTasks = tasks.filter(t => t.status === col);
+          
+          return (
+            <Column key={col} title={col} count={colTasks.length}>
+              {colTasks.map(task => (
                 <TaskCard key={task.id} task={task} moveTask={moveTask} />
               ))}
-            </div>
-          </div>
-        ))}
+            </Column>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { mockBoards, mockUsers } from '../data/mockData';
+import Button from '../components/Button';
 
 export default function Home({ currentUser }) {
   const [boards, setBoards] = useState(mockBoards);
@@ -64,7 +65,7 @@ export default function Home({ currentUser }) {
     <div className="dashboard">
       <div className="dashboard-header">
         <h2>Your Workspaces</h2>
-        <button className="btn-primary" onClick={() => setShowCreateModal(true)}>+ Create Workspace</button>
+        <Button variant="primary" onClick={() => setShowCreateModal(true)}>+ Create Workspace</Button>
       </div>
 
       <div className="board-grid">
@@ -98,7 +99,7 @@ export default function Home({ currentUser }) {
                 <div className="selected-members">
                   {selectedMembers.map(m => (
                     <span key={m} className="member-tag">
-                      {m} <button type="button" onClick={() => removeMember(m)}>×</button>
+                      {m} <Button type="button" onClick={() => removeMember(m)} style={{ background: 'none', border: 'none', color: 'white', padding: 0 }}>×</Button>
                     </span>
                   ))}
                 </div>
@@ -122,8 +123,8 @@ export default function Home({ currentUser }) {
                 <input name="boardTags" type="text" placeholder="e.g., Frontend, UI" />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-                <button type="submit" className="btn-primary">Create</button>
+                <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
+                <Button type="submit" variant="primary">Create</Button>
               </div>
             </form>
           </div>

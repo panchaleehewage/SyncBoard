@@ -1,3 +1,5 @@
+import Button from './Button';
+
 export default function TaskCard({ task, moveTask }) {
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Done';
 
@@ -24,10 +26,10 @@ export default function TaskCard({ task, moveTask }) {
 
       <div className="card-actions">
         {task.status === 'To Do' && (
-          <button onClick={() => moveTask(task.id, 'In Progress')}>Start</button>
+          <Button variant="primary" onClick={() => moveTask(task.id, 'In Progress')}>Start</Button>
         )}
         {task.status === 'In Progress' && (
-          <button onClick={() => moveTask(task.id, 'Done')}>Finish</button>
+          <Button variant="primary" onClick={() => moveTask(task.id, 'Done')}>Finish</Button>
         )}
       </div>
     </div>
