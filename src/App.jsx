@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Board from './pages/Board';
 import { mockUsers } from './data/mockData';
 import './App.css';
+import Button from './components/Button';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -56,12 +57,12 @@ export default function App() {
             <div className="user-controls">
               <div className="user-avatar">{currentUser.charAt(0).toUpperCase()}</div>
               <span className="username-display">{currentUser}</span>
-              <button className="btn-logout" onClick={() => setCurrentUser(null)}>Logout</button>
+              <Button variant="danger" onClick={() => setCurrentUser(null)}>Logout</Button>
             </div>
           ) : (
             <div className="auth-buttons">
-              <button className="btn-secondary" style={{color: 'black'}} onClick={() => setAuthModal('login')}>Login</button>
-              <button className="btn-primary" style={{background: '#3b82f6', color: 'white'}} onClick={() => setAuthModal('signup')}>Sign Up</button>
+              <Button variant="secondary" onClick={() => setAuthModal('login')}>Login</Button>
+              <Button variant="primary" onClick={() => setAuthModal('signup')}>Sign Up</Button>
             </div>
           )}
         </div>
@@ -81,8 +82,8 @@ export default function App() {
                 <input name="password" type="password" required />
               </div>
               <div className="modal-actions">
-                <button type="button" className="btn-secondary" onClick={() => setAuthModal(null)}>Cancel</button>
-                <button type="submit" className="btn-primary">{authModal === 'login' ? 'Login' : 'Sign Up'}</button>
+                <Button type="button" variant="secondary" onClick={() => setAuthModal(null)}>Cancel</Button>
+                <Button type="submit" variant="primary">{authModal === 'login' ? 'Login' : 'Sign Up'}</Button>
               </div>
             </form>
           </div>
