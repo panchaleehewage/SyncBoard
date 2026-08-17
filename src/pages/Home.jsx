@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { mockBoards, mockUsers } from '../mockData';
+import { mockBoards, mockUsers } from '../data/mockData';
 
 export default function Home({ currentUser }) {
   const [boards, setBoards] = useState(mockBoards);

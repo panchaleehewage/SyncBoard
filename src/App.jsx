@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 import Home from './pages/Home';
 import Board from './pages/Board';
-import { mockUsers } from './mockData';
+import { mockUsers } from './data/mockData';
 import './App.css';
 
 export default function App() {

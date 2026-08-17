@@ -1,6 +1,6 @@
 import { useParams, Navigate } from 'react-router-dom';
 import { useState } from 'react';
-import { mockBoards, mockTasks } from '../mockData';
+import { mockBoards, mockTasks } from '../data/mockData';
 import TaskCard from '../components/TaskCard';
 let nextTaskId = 10000;
 
