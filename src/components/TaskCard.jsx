@@ -1,6 +1,6 @@
 import Button from './Button';
 
-export default function TaskCard({ task, moveTask }) {
+export default function TaskCard({ task, moveTask, deleteTask }) {
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Done';
 
   let cardClass = 'task-card ';
@@ -25,11 +25,21 @@ export default function TaskCard({ task, moveTask }) {
       </div>
 
       <div className="card-actions">
-        {task.status === 'To Do' && (
-          <Button variant="primary" onClick={() => moveTask(task.id, 'In Progress')}>Start</Button>
+        <Button variant="danger" onClick={() => {
+          if (window.confirm("Are you sure you want to delete this task?")) {
+            deleteTask(task.id);
+          }
+        }}>Delete</Button>
+  
+        {task.status !== 'To Do' && (
+          <Button variant="secondary" onClick={() => moveTask(task.id, task.status === 'Done' ? 'In Progress' : 'To Do')}>
+            Move Left
+          </Button>
         )}
-        {task.status === 'In Progress' && (
-          <Button variant="primary" onClick={() => moveTask(task.id, 'Done')}>Finish</Button>
+        {task.status !== 'Done' && (
+          <Button variant="primary" onClick={() => moveTask(task.id, task.status === 'To Do' ? 'In Progress' : 'Done')}>
+            Move Right
+          </Button>
         )}
       </div>
     </div>

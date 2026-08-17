@@ -25,6 +25,10 @@ export default function Board({ currentUser }) {
     setTasks(tasks.map(task => task.id === id ? { ...task, status: newStatus } : task));
   };
 
+  const deleteTask = (id) => {
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+  };
+
   const handleTagToggle = (tag) => {
     setNewTaskTags(prevTags => 
       prevTags.includes(tag) 
@@ -138,7 +142,7 @@ export default function Board({ currentUser }) {
           return (
             <Column key={col} title={col} count={colTasks.length}>
               {colTasks.map(task => (
-                <TaskCard key={task.id} task={task} moveTask={moveTask} />
+                <TaskCard key={task.id} task={task} moveTask={moveTask} deleteTask={deleteTask}/>
               ))}
             </Column>
           );
