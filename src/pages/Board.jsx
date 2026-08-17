@@ -39,6 +39,18 @@ export default function Board({ currentUser }) {
 
   const handleAddTask = (e) => {
     e.preventDefault();
+    if (newTaskTitle.length < 3) {
+      return alert("Title must be at least 3 characters long.");
+    }
+    
+    const selectedDate = new Date(newTaskDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      return alert("Due date cannot be in the past.");
+    }
+
     if (!newTaskTitle || !newTaskDate || !newTaskAssignee) return;
 
     const newTask = {
@@ -55,10 +67,13 @@ export default function Board({ currentUser }) {
     setNewTaskTitle('');
     setNewTaskDate('');
     setNewTaskTags([]);
-    setShowTaskModal(false); // Close the modal after adding
+    setShowTaskModal(false);
   };
 
   const columns = ['To Do', 'In Progress', 'Done'];
+
+  const doneCount = tasks.filter(t => t.status === 'Done').length;
+  const totalCount = tasks.length;
 
   return (
     <div className="board-page">
@@ -68,6 +83,7 @@ export default function Board({ currentUser }) {
           <span className="leader-badge" style={{marginTop: '8px', display: 'inline-block'}}>
             Leader: {board.leader}
           </span>
+          <p>{doneCount} of {totalCount} done</p>
         </div>
         {/* Trigger Button */}
         <Button variant="primary" onClick={() => setShowTaskModal(true)}>+ Add Task</Button>
