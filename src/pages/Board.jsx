@@ -1,4 +1,4 @@
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, useSearchParams } from 'react-router-dom';
 import { useState } from 'react';
 import { mockBoards, mockTasks } from '../data/mockData';
 import TaskCard from '../components/TaskCard';
@@ -13,6 +13,30 @@ export default function Board({ currentUser }) {
   
   const [tasks, dispatch] = useTaskReducer(mockTasks.filter(t => t.boardId === board?.id));
   const [showTaskModal, setShowTaskModal] = useState(false); // Controls the popup
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const searchQuery = searchParams.get('search') || '';
+  const assigneeFilter = searchParams.get('assignee') || '';
+
+  const updateSearch = (e) => {
+    const value = e.target.value;
+    if (value) searchParams.set('search', value);
+    else searchParams.delete('search');
+    setSearchParams(searchParams);
+  };
+
+  const updateAssignee = (e) => {
+    const value = e.target.value;
+    if (value) searchParams.set('assignee', value);
+    else searchParams.delete('assignee');
+    setSearchParams(searchParams);
+  };
+
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesAssignee = assigneeFilter ? task.assignee === assigneeFilter : true;
+    return matchesSearch && matchesAssignee;
+  });
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
@@ -152,19 +176,52 @@ export default function Board({ currentUser }) {
         </div>
       )}
 
-      <div className="board">
-        {columns.map(col => {
-          const colTasks = tasks.filter(t => t.status === col);
-          
-          return (
-            <Column key={col} title={col} count={colTasks.length}>
-              {colTasks.map(task => (
-                <TaskCard key={task.id} task={task} moveTask={moveTask} deleteTask={deleteTask}/>
-              ))}
-            </Column>
-          );
-        })}
+      <div className="filter-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', backgroundColor: 'var(--card-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+        <div className="form-group" style={{ flex: 1 }}>
+          <label>Search Tasks</label>
+          <input 
+            type="text" 
+            placeholder="Search by title..." 
+            value={searchQuery}
+            onChange={updateSearch}
+          />
+        </div>
+        <div className="form-group" style={{ flex: 1 }}>
+          <label>Filter by Assignee</label>
+          <select value={assigneeFilter} onChange={updateAssignee}>
+            <option value="">All Members</option>
+            {board.members.map(member => (
+              <option key={member} value={member}>{member}</option>
+            ))}
+          </select>
+        </div>
       </div>
+
+      {filteredTasks.length === 0 ? (
+        <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
+          <h3 style={{ margin: '0 0 8px 0' }}>No tasks found</h3>
+          <p style={{ color: 'var(--text-light)', margin: 0 }}>Try adjusting your search or filters.</p>
+        </div>
+      ) : (
+        <div className="board">
+          {columns.map(col => {
+            const colTasks = filteredTasks.filter(t => t.status === col);
+            
+            return (
+              <Column key={col} title={col} count={colTasks.length}>
+                {colTasks.map(task => (
+                  <TaskCard 
+                    key={task.id} 
+                    task={task} 
+                    moveTask={moveTask} 
+                    deleteTask={deleteTask} 
+                  />
+                ))}
+              </Column>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
