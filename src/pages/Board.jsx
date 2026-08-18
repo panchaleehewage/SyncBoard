@@ -4,13 +4,14 @@ import { mockBoards, mockTasks } from '../data/mockData';
 import TaskCard from '../components/TaskCard';
 import Button from '../components/Button';
 import Column from '../components/Column';
+import { useTaskReducer } from '../hooks/useTaskReducer';
 let nextTaskId = 10000;
 
 export default function Board({ currentUser }) {
   const { boardId } = useParams();
   const board = mockBoards.find(b => b.id === parseInt(boardId));
   
-  const [tasks, setTasks] = useState(mockTasks.filter(t => t.boardId === board?.id));
+  const [tasks, dispatch] = useTaskReducer(mockTasks.filter(t => t.boardId === board?.id));
   const [showTaskModal, setShowTaskModal] = useState(false); // Controls the popup
   
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -22,11 +23,11 @@ export default function Board({ currentUser }) {
   if (!board) return <div className="alert">Board not found.</div>;
 
   const moveTask = (id, newStatus) => {
-    setTasks(tasks.map(task => task.id === id ? { ...task, status: newStatus } : task));
+    dispatch({ type: 'MOVE_TASK', payload: { id, newStatus } });
   };
 
   const deleteTask = (id) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+    dispatch({ type: 'DELETE_TASK', payload: id });
   };
 
   const handleTagToggle = (tag) => {
@@ -63,7 +64,7 @@ export default function Board({ currentUser }) {
       status: "To Do"
     };
 
-    setTasks([...tasks, newTask]);
+    dispatch({ type: 'ADD_TASK', payload: newTask });
     setNewTaskTitle('');
     setNewTaskDate('');
     setNewTaskTags([]);
