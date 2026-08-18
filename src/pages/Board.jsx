@@ -1,18 +1,40 @@
 import { useParams, Navigate, useSearchParams } from 'react-router-dom';
-import { useState } from 'react';
-import { mockBoards, mockTasks } from '../data/mockData';
-import TaskCard from '../components/TaskCard';
-import Button from '../components/Button';
-import Column from '../components/Column';
+import { useState, useEffect } from 'react';
+import { mockBoards } from '../data/mockData';
+import { getTasks } from '../api/tasks';
 import { useTaskReducer } from '../hooks/useTaskReducer';
+import TaskCard from '../components/TaskCard';
+import Column from '../components/Column';
+import Button from '../components/Button';
+
 let nextTaskId = 10000;
 
 export default function Board({ currentUser }) {
   const { boardId } = useParams();
   const board = mockBoards.find(b => b.id === parseInt(boardId));
   
-  const [tasks, dispatch] = useTaskReducer(mockTasks.filter(t => t.boardId === board?.id));
-  const [showTaskModal, setShowTaskModal] = useState(false); // Controls the popup
+  const [tasks, dispatch] = useTaskReducer([]);
+  
+  const [isLoading, setIsLoading] = useState(true); 
+  
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskDate, setNewTaskDate] = useState('');
+  const [newTaskAssignee, setNewTaskAssignee] = useState(currentUser || '');
+  const [newTaskTags, setNewTaskTags] = useState([]);
+
+  useEffect(() => {
+    if (!board) return;
+    
+    setIsLoading(true);
+    getTasks().then((allTasks) => {
+      const boardTasks = allTasks.filter(t => t.boardId === board.id);
+      
+      dispatch({ type: 'SET_TASKS', payload: boardTasks });
+      setIsLoading(false);
+    });
+  }, [board?.id, dispatch]);
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const searchQuery = searchParams.get('search') || '';
@@ -38,11 +60,6 @@ export default function Board({ currentUser }) {
     return matchesSearch && matchesAssignee;
   });
   
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDate, setNewTaskDate] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState(currentUser || '');
-  const [newTaskTags, setNewTaskTags] = useState([]);
-
   if (!currentUser) return <Navigate to="/" replace />;
   if (!board) return <div className="alert">Board not found.</div>;
 
@@ -197,7 +214,11 @@ export default function Board({ currentUser }) {
         </div>
       </div>
 
-      {filteredTasks.length === 0 ? (
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '100px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <h2 style={{ color: 'var(--text-light)' }}>Loading tasks...</h2>
+        </div>
+      ) : filteredTasks.length === 0 ? (
         <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
           <h3 style={{ margin: '0 0 8px 0' }}>No tasks found</h3>
           <p style={{ color: 'var(--text-light)', margin: 0 }}>Try adjusting your search or filters.</p>
