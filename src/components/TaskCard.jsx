@@ -1,5 +1,6 @@
 import Button from './Button';
 import { useTheme } from '../context/ThemeContext';
+import { Link } from 'react-router-dom';
 
 export default function TaskCard({ task, moveTask, deleteTask }) {
   const { isDarkMode } = useTheme();
@@ -13,7 +14,11 @@ export default function TaskCard({ task, moveTask, deleteTask }) {
 
   return (
     <div className={cardClass} style={{ backgroundColor: isDarkMode ? '#1e293b' : '#ffffff' }}>
-      <h3>{task.title}</h3>
+      <h3>
+        <Link to={`/tasks/${task.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+          {task.title}
+        </Link>
+      </h3>
       <p className="task-meta">
         <strong>{task.assignee}</strong> 
         {isOverdue && <span className="late-warning"> • Late</span>}

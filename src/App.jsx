@@ -6,6 +6,8 @@ import { mockUsers } from './data/mockData';
 import './App.css';
 import Button from './components/Button';
 import { useTheme } from './context/ThemeContext';
+import TaskDetail from './pages/TaskDetail';
+import NotFound from './pages/NotFound';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -89,6 +91,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home currentUser={currentUser} />} />
         <Route path="/board/:boardId" element={<Board currentUser={currentUser} />} />
+        <Route path="/tasks/:id" element={<TaskDetail />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );
