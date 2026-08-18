@@ -16,6 +16,7 @@ export default function Board({ currentUser }) {
   const [tasks, dispatch] = useTaskReducer([]);
   
   const [isLoading, setIsLoading] = useState(true); 
+  const [error, setError] = useState(null);
   
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
@@ -27,10 +28,14 @@ export default function Board({ currentUser }) {
     if (!board) return;
     
     setIsLoading(true);
+    setError(null);
+
     getTasks().then((allTasks) => {
       const boardTasks = allTasks.filter(t => t.boardId === board.id);
-      
       dispatch({ type: 'SET_TASKS', payload: boardTasks });
+      setIsLoading(false);
+    }).catch((err) => {
+      setError("Failed to load tasks. Please try again later.");
       setIsLoading(false);
     });
   }, [board?.id, dispatch]);
@@ -39,6 +44,8 @@ export default function Board({ currentUser }) {
 
   const searchQuery = searchParams.get('search') || '';
   const assigneeFilter = searchParams.get('assignee') || '';
+  const statusFilter = searchParams.get('status') || '';
+  const overdueFilter = searchParams.get('overdue') === 'true';
 
   const updateSearch = (e) => {
     const value = e.target.value;
@@ -54,10 +61,28 @@ export default function Board({ currentUser }) {
     setSearchParams(searchParams);
   };
 
+  const updateStatus = (e) => {
+    const value = e.target.value;
+    if (value) searchParams.set('status', value);
+    else searchParams.delete('status');
+    setSearchParams(searchParams);
+  };
+
+  const toggleOverdue = (e) => {
+    if (e.target.checked) searchParams.set('overdue', 'true');
+    else searchParams.delete('overdue');
+    setSearchParams(searchParams);
+  };
+
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesAssignee = assigneeFilter ? task.assignee === assigneeFilter : true;
-    return matchesSearch && matchesAssignee;
+    const matchesStatus = statusFilter ? task.status === statusFilter : true;
+
+    const isLate = new Date(task.dueDate) < new Date() && task.status !== 'Done';
+    const matchesOverdue = overdueFilter ? isLate : true;
+
+    return matchesSearch && matchesAssignee && matchesStatus && matchesOverdue;
   });
   
   if (!currentUser) return <Navigate to="/" replace />;
@@ -193,30 +218,41 @@ export default function Board({ currentUser }) {
         </div>
       )}
 
-      <div className="filter-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', backgroundColor: 'var(--card-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-        <div className="form-group" style={{ flex: 1 }}>
+      {/* The Expanded Filter Bar */}
+      <div className="filter-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', backgroundColor: 'var(--card-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
+        <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
           <label>Search Tasks</label>
-          <input 
-            type="text" 
-            placeholder="Search by title..." 
-            value={searchQuery}
-            onChange={updateSearch}
-          />
+          <input type="text" placeholder="Search by title..." value={searchQuery} onChange={updateSearch} />
         </div>
-        <div className="form-group" style={{ flex: 1 }}>
-          <label>Filter by Assignee</label>
+        <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+          <label>Assignee</label>
           <select value={assigneeFilter} onChange={updateAssignee}>
             <option value="">All Members</option>
-            {board.members.map(member => (
-              <option key={member} value={member}>{member}</option>
-            ))}
+            {board.members.map(member => <option key={member} value={member}>{member}</option>)}
           </select>
+        </div>
+        <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
+          <label>Status</label>
+          <select value={statusFilter} onChange={updateStatus}>
+            <option value="">All Statuses</option>
+            {columns.map(col => <option key={col} value={col}>{col}</option>)}
+          </select>
+        </div>
+        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '22px' }}>
+          <input type="checkbox" id="overdue-check" checked={overdueFilter} onChange={toggleOverdue} style={{ width: 'auto' }} />
+          <label htmlFor="overdue-check" style={{ margin: 0, cursor: 'pointer' }}>Overdue Only</label>
         </div>
       </div>
 
+      {/* Rendering State Logic */}
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: '100px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}>
           <h2 style={{ color: 'var(--text-light)' }}>Loading tasks...</h2>
+        </div>
+      ) : error ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', color: 'var(--danger)' }}>
+          <h3 style={{ margin: '0 0 8px 0' }}>Error</h3>
+          <p style={{ margin: 0 }}>{error}</p>
         </div>
       ) : filteredTasks.length === 0 ? (
         <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}>
