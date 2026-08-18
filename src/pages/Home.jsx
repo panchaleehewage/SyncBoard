@@ -7,7 +7,6 @@ export default function Home({ currentUser }) {
   const [boards, setBoards] = useState(mockBoards);
   const [showCreateModal, setShowCreateModal] = useState(false);
   
-  // States for the new teammate search feature
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMembers, setSelectedMembers] = useState([]);
 
@@ -20,7 +19,6 @@ export default function Home({ currentUser }) {
     );
   }
 
-  // Filter available users for the search dropdown
   const availableUsers = mockUsers
     .map(u => u.username)
     .filter(u => 
@@ -31,7 +29,7 @@ export default function Home({ currentUser }) {
 
   const addMember = (user) => {
     setSelectedMembers([...selectedMembers, user]);
-    setSearchTerm(''); // clear search after selecting
+    setSearchTerm('');
   };
 
   const removeMember = (user) => {
@@ -46,12 +44,17 @@ export default function Home({ currentUser }) {
     const members = [currentUser, ...selectedMembers];
     const tags = tagsInput.split(',').map(tag => tag.trim()).filter(tag => tag);
 
+    const columnsInput = e.target.boardColumns.value;
+    const defaultCols = ["To Do", "In Progress", "Done"];
+    const parsedColumns = columnsInput ? columnsInput.split(',').map(c => c.trim()).filter(c => c) : defaultCols;
+
     const newBoard = {
       id: Date.now(),
       title,
       leader: currentUser,
       members,
-      tags: tags.length ? tags : ["General"]
+      tags: tags.length ? tags : ["General"],
+      columns: parsedColumns
     };
 
     setBoards([...boards, newBoard]);
@@ -122,6 +125,12 @@ export default function Home({ currentUser }) {
                 <label>Tags (Comma separated)</label>
                 <input name="boardTags" type="text" placeholder="e.g., Frontend, UI" />
               </div>
+
+              <div className="form-group">
+                <label>Columns (Comma separated)</label>
+                <input name="boardColumns" type="text" placeholder="e.g., To Do, Testing, Done" />
+              </div>
+              
               <div className="modal-actions">
                 <Button type="button" variant="secondary" onClick={() => setShowCreateModal(false)}>Cancel</Button>
                 <Button type="submit" variant="primary">Create</Button>

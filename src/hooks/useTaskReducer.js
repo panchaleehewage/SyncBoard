@@ -12,6 +12,17 @@ function taskReducer(state, action) {
       );
     case 'DELETE_TASK':
       return state.filter(task => task.id !== action.payload);
+    
+    // --- NEW ACTIONS ---
+    case 'EDIT_TASK':
+      return state.map(task => 
+        task.id === action.payload.id ? action.payload : task
+      );
+    case 'RENAME_COLUMN':
+      // If a column name changes, all tasks in that column must update their status to match
+      return state.map(task => 
+        task.status === action.payload.oldName ? { ...task, status: action.payload.newName } : task
+      );
     default:
       return state;
   }

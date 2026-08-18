@@ -2,7 +2,7 @@ import Button from './Button';
 import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
 
-export default function TaskCard({ task, moveTask, deleteTask }) {
+export default function TaskCard({ task, moveTask, deleteTask, editTask }) {
   const { isDarkMode } = useTheme();
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Done';
 
@@ -32,6 +32,8 @@ export default function TaskCard({ task, moveTask, deleteTask }) {
       </div>
 
       <div className="card-actions">
+        <Button variant="secondary" onClick={() => editTask(task)}>Edit</Button>
+        
         <Button variant="danger" onClick={() => {
           if (window.confirm("Are you sure you want to delete this task?")) {
             deleteTask(task.id);

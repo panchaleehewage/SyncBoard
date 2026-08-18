@@ -10,14 +10,16 @@ export const mockBoards = [
     title: "LearnThread Development", 
     leader: "StudentDev", 
     members: ["StudentDev", "Alice", "Bob"], 
-    tags: ["Frontend", "Backend", "API", "Database", "AI", "Testing"] 
+    tags: ["Frontend", "Backend", "API", "Database", "AI", "Testing"],
+    columns: ["To Do", "In Progress", "Done"]
   },
   { 
     id: 2, 
     title: "Workshop Planning", 
     leader: "Alice", 
     members: ["Alice", "StudentDev"], 
-    tags: ["Deco","Logistics", "Marketing", "Content"] 
+    tags: ["Deco","Logistics", "Marketing", "Content"],
+    columns: ["To Do", "In Progress", "Done"]
   }
 ];
 
