@@ -1,6 +1,8 @@
 import Button from './Button';
+import { useTheme } from '../context/ThemeContext';
 
 export default function TaskCard({ task, moveTask, deleteTask }) {
+  const { isDarkMode } = useTheme();
   const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Done';
 
   let cardClass = 'task-card ';
@@ -10,7 +12,7 @@ export default function TaskCard({ task, moveTask, deleteTask }) {
   else cardClass += 'done';
 
   return (
-    <div className={cardClass}>
+    <div className={cardClass} style={{ backgroundColor: isDarkMode ? '#1e293b' : '#ffffff' }}>
       <h3>{task.title}</h3>
       <p className="task-meta">
         <strong>{task.assignee}</strong> 
