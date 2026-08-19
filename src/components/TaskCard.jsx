@@ -2,19 +2,21 @@ import Button from './Button';
 import { useTheme } from '../context/ThemeContext';
 import { Link } from 'react-router-dom';
 
-export default function TaskCard({ task, moveTask, deleteTask, editTask }) {
+export default function TaskCard({ task, deleteTask, editTask, columnIndex, totalColumns, onMoveLeft, onMoveRight }) {
   const { isDarkMode } = useTheme();
-  const isOverdue = new Date(task.dueDate) < new Date() && task.status !== 'Done';
+  
+  const isOverdue = new Date(task.dueDate) < new Date() && columnIndex !== totalColumns - 1;
 
   let cardClass = 'task-card ';
   if (isOverdue) cardClass += 'overdue';
-  else if (task.status === 'To Do') cardClass += 'to-do';
-  else if (task.status === 'In Progress') cardClass += 'in-progress';
-  else cardClass += 'done';
+  else if (columnIndex === 0) cardClass += 'to-do';
+  else if (columnIndex === totalColumns - 1) cardClass += 'done';
+  else if (columnIndex === 1) cardClass += 'in-progress';
+  else cardClass += 'default-col';
 
   return (
     <div className={cardClass} style={{ backgroundColor: isDarkMode ? '#1e293b' : '#ffffff' }}>
-      <h3>
+      <h3 style={{ textTransform: 'none' }}>
         <Link to={`/tasks/${task.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
           {task.title}
         </Link>
@@ -35,20 +37,15 @@ export default function TaskCard({ task, moveTask, deleteTask, editTask }) {
         <Button variant="secondary" onClick={() => editTask(task)}>Edit</Button>
         
         <Button variant="danger" onClick={() => {
-          if (window.confirm("Are you sure you want to delete this task?")) {
-            deleteTask(task.id);
-          }
+          if (window.confirm("Are you sure you want to delete this task?")) deleteTask(task.id);
         }}>Delete</Button>
-  
-        {task.status !== 'To Do' && (
-          <Button variant="secondary" onClick={() => moveTask(task.id, task.status === 'Done' ? 'In Progress' : 'To Do')}>
-            Move Left
-          </Button>
+        
+        {/* Render move buttons dynamically if the functions were provided by the Board */}
+        {onMoveLeft && (
+          <Button variant="secondary" onClick={onMoveLeft}>Move Left</Button>
         )}
-        {task.status !== 'Done' && (
-          <Button variant="primary" onClick={() => moveTask(task.id, task.status === 'To Do' ? 'In Progress' : 'Done')}>
-            Move Right
-          </Button>
+        {onMoveRight && (
+          <Button variant="primary" onClick={onMoveRight}>Move Right</Button>
         )}
       </div>
     </div>

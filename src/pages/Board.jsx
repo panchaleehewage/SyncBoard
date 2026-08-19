@@ -12,7 +12,7 @@ let nextTaskId = 10000;
 export default function Board({ currentUser }) {
   const { boardId } = useParams();
   const board = mockBoards.find(b => b.id === parseInt(boardId));
-  const isLeader = currentUser === board?.leader; // Check if the current user is the boss
+  const isLeader = currentUser === board?.leader;
   
   const [tasks, dispatch] = useTaskReducer([]);
   const [columns, setColumns] = useState(board?.columns || ['To Do', 'In Progress', 'Done']);
@@ -121,14 +121,16 @@ export default function Board({ currentUser }) {
   const handleAddColumn = () => setColumns([...columns, `New Column ${columns.length + 1}`]);
   const handleRemoveColumn = (index) => setColumns(columns.filter((_, i) => i !== index));
 
+  const doneCount = tasks.filter(t => t.status === columns[columns.length - 1]).length;
+  const totalCount = tasks.length;
+
   return (
     <div className="board-page">
       <div className="board-header">
-        <div>
-          <h2>{board.title}</h2>
-          <span className="leader-badge" style={{marginTop: '8px', display: 'inline-block', marginRight: '12px'}}>
-            Leader: {board.leader}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          <h2 style={{ margin: 0 }}>{board.title}</h2>
+          <span className="leader-badge">Leader: {board.leader}</span>
+          <span className="progress-badge">{doneCount} of {totalCount} done</span>
           {isLeader && (
             <Button variant="secondary" onClick={() => setShowColumnModal(true)}>⚙️ Manage Columns</Button>
           )}
@@ -233,12 +235,24 @@ export default function Board({ currentUser }) {
         <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}><h3 style={{ margin: '0 0 8px 0' }}>No tasks found</h3><p style={{ color: 'var(--text-light)', margin: 0 }}>Try adjusting your search or filters.</p></div>
       ) : (
         <div className="board">
-          {columns.map(col => {
+          {columns.map((col, colIndex) => {
             const colTasks = filteredTasks.filter(t => t.status === col);
+            
             return (
               <Column key={col} title={col} count={colTasks.length}>
                 {colTasks.map(task => (
-                  <TaskCard key={task.id} task={task} moveTask={moveTask} deleteTask={deleteTask} editTask={openEditTask} />
+                  <TaskCard 
+                    key={task.id} 
+                    task={task} 
+                    deleteTask={deleteTask} 
+                    editTask={openEditTask}
+                    
+                    columnIndex={colIndex}
+                    totalColumns={columns.length}
+                    
+                    onMoveLeft={colIndex > 0 ? () => moveTask(task.id, columns[colIndex - 1]) : null}
+                    onMoveRight={colIndex < columns.length - 1 ? () => moveTask(task.id, columns[colIndex + 1]) : null}
+                  />
                 ))}
               </Column>
             );

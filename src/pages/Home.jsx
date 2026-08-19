@@ -12,9 +12,22 @@ export default function Home({ currentUser }) {
 
   if (!currentUser) {
     return (
-      <div className="landing-page">
-        <h1>Welcome to Syncboard</h1>
-        <p>Please login or sign up to view your workspaces.</p>
+      <div className="landing-page" style={{ padding: '60px 20px', maxWidth: '800px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '3rem', marginBottom: '20px', color: 'var(--primary)' }}>Master Your Workflow</h1>
+        <p style={{ fontSize: '1.2rem', color: 'var(--text-light)', marginBottom: '40px', lineHeight: '1.6' }}>
+          Whether you're building a new web application, planning a marketing campaign, or organizing a community event, Syncboard keeps your team aligned and your tasks on track.
+        </p>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '20px', textAlign: 'left' }}>
+          <div style={{ padding: '24px', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--todo)' }}>Custom Columns</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0 }}>Design your board your way. Add, rename, and organize columns to fit your specific workflow.</p>
+          </div>
+          <div style={{ padding: '24px', background: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--inprogress)' }}>Team Collaboration</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-light)', margin: 0 }}>Assign tasks, track due dates, and watch updates happen live across your entire team.</p>
+          </div>
+        </div>
       </div>
     );
   }
