@@ -16,5 +16,10 @@ export const authController = {
     const result = await authService.login(email, password);
     
     res.status(200).json({ status: 'success', data: result });
-  })
+  }),
+
+  getMe: (req, res) => {
+    const { password: _, ...userWithoutPassword } = req.user;
+    res.status(200).json({ status: 'success', data: { user: userWithoutPassword } });
+  }
 };
