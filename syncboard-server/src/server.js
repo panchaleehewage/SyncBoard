@@ -4,3 +4,5 @@ import { config } from './config.js';
 app.listen(config.port, () => {
   console.log(`Syncboard Server running in ${config.env} mode on port ${config.port}...`);
 });
+
+//node --watch src/server.js
