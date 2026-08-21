@@ -3,7 +3,6 @@ import asyncHandler from '../utils/asyncHandler.js';
 
 export const taskController = {
   getAllTasks: asyncHandler(async (req, res) => {
-    // We now pass req.user to the service
     const tasks = await taskService.getTasks(req.query, req.user);
     res.status(200).json({ status: 'success', data: tasks });
   }),

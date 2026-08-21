@@ -19,7 +19,6 @@ export function ThemeProvider({ children }) {
   );
 }
 
-// Custom hook to make it easy to use in other files
 export function useTheme() {
   return useContext(ThemeContext);
 }
