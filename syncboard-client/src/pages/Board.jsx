@@ -1,263 +1,329 @@
-import { useParams, Navigate, useSearchParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { mockBoards } from '../data/mockData';
-import { getTasks } from '../api/tasks';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { DragDropContext } from '@hello-pangea/dnd';
+import { useApp } from '../context/AppContext';
 import { useTaskReducer } from '../hooks/useTaskReducer';
-import TaskCard from '../components/TaskCard';
+import { getTasks } from '../api/tasks';
+import { DEFAULT_COL_COLORS } from '../data/colors';
 import Column from '../components/Column';
-import Button from '../components/Button';
+import TaskCard from '../components/TaskCard';
+import TaskFormModal from '../components/TaskFormModal';
+import TaskDetailModal from '../components/TaskDetailModal';
+import BoardSettingsModal from '../components/BoardSettingsModal';
+import ConfirmModal from '../components/ConfirmModal';
+import { ArrowLeft, Plus, Settings, Trash2, Search, AlertTriangle, Filter } from 'lucide-react';
 
-let nextTaskId = 10000;
-
-export default function Board({ currentUser }) {
+export default function Board() {
   const { boardId } = useParams();
-  const board = mockBoards.find(b => b.id === parseInt(boardId));
-  const isLeader = currentUser === board?.leader;
-  
+  const navigate = useNavigate();
+  const { currentUser, boards, setBoards } = useApp();
+
+  const board = boards.find(b => b.id === parseInt(boardId));
+
+  // Columns as { label, color } objects
+  const [columns, setColumns] = useState(
+    board?.columns || [
+      { label: 'To Do', color: 'violet' },
+      { label: 'In Progress', color: 'amber' },
+      { label: 'Done', color: 'emerald' },
+    ]
+  );
+
+  // Board-level tags as { label, color } objects
+  const [boardTags, setBoardTags] = useState(board?.tags || []);
+
   const [tasks, dispatch] = useTaskReducer([]);
-  const [columns, setColumns] = useState(board?.columns || ['To Do', 'In Progress', 'Done']);
-  
-  const [isLoading, setIsLoading] = useState(true); 
-  const [error, setError] = useState(null);
-  
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [editingTask, setEditingTask] = useState(null); // Tracks if we are editing vs adding
-  const [showColumnModal, setShowColumnModal] = useState(false); // Controls leader settings
-  
-  const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDate, setNewTaskDate] = useState('');
-  const [newTaskAssignee, setNewTaskAssignee] = useState(currentUser || '');
-  const [newTaskTags, setNewTaskTags] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [assigneeFilter, setAssigneeFilter] = useState('');
+  const [overdueOnly, setOverdueOnly] = useState(false);
+
+  const [taskModal, setTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
+  const [detailTask, setDetailTask] = useState(null);
+  const [settingsModal, setSettingsModal] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const isLeader = currentUser === board?.leader;
+
+  // Tag color map: { "Frontend": "blue", "Backend": "violet", ... }
+  const tagColorMap = Object.fromEntries(boardTags.map(t => [t.label, t.color]));
 
   useEffect(() => {
-    if (!board) return;
-    setIsLoading(true);
-    setError(null);
-
-    getTasks().then((allTasks) => {
-      const boardTasks = allTasks.filter(t => t.boardId === board.id);
-      dispatch({ type: 'SET_TASKS', payload: boardTasks });
-      setIsLoading(false);
-    }).catch((err) => {
-      setError("Failed to load tasks. Please try again later.");
-      setIsLoading(false);
+    getTasks().then(all => {
+      dispatch({ type: 'SET_TASKS', payload: all.filter(t => t.boardId === parseInt(boardId)) });
+      setLoading(false);
     });
-  }, [board?.id, dispatch]);
+  }, [boardId]);
 
-  const [searchParams, setSearchParams] = useSearchParams();
-  const searchQuery = searchParams.get('search') || '';
-  const assigneeFilter = searchParams.get('assignee') || '';
-  const statusFilter = searchParams.get('status') || '';
-  const overdueFilter = searchParams.get('overdue') === 'true';
+  if (!board) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate-500 dark:text-slate-400 mb-4">Board not found.</p>
+          <Link to="/" className="text-brand-600 dark:text-brand-400 text-sm font-medium hover:underline">← Back to Home</Link>
+        </div>
+      </div>
+    );
+  }
 
-  const updateParam = (key, value) => {
-    if (value) searchParams.set(key, value);
-    else searchParams.delete(key);
-    setSearchParams(searchParams);
-  };
+  // Progress
+  const doneLabel = columns[columns.length - 1]?.label;
+  const doneCount = tasks.filter(t => t.status === doneLabel).length;
+  const progress = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesAssignee = assigneeFilter ? task.assignee === assigneeFilter : true;
-    const matchesStatus = statusFilter ? task.status === statusFilter : true;
-    const isLate = new Date(task.dueDate) < new Date() && task.status !== columns[columns.length - 1]; // Assume last column is "Done"
-    const matchesOverdue = overdueFilter ? isLate : true;
-    return matchesSearch && matchesAssignee && matchesStatus && matchesOverdue;
-  });
-  
-  if (!currentUser) return <Navigate to="/" replace />;
-  if (!board) return <div className="alert">Board not found.</div>;
-
-  const moveTask = (id, newStatus) => dispatch({ type: 'MOVE_TASK', payload: { id, newStatus } });
-  const deleteTask = (id) => dispatch({ type: 'DELETE_TASK', payload: id });
-
-  // Opens the modal pre-filled with the task's data
-  const openEditTask = (task) => {
-    setEditingTask(task);
-    setNewTaskTitle(task.title);
-    setNewTaskDate(task.dueDate);
-    setNewTaskAssignee(task.assignee);
-    setNewTaskTags(task.tags);
-    setShowTaskModal(true);
-  };
-
-  const resetForm = () => {
-    setEditingTask(null);
-    setNewTaskTitle('');
-    setNewTaskDate('');
-    setNewTaskTags([]);
-    setShowTaskModal(false);
-  };
-
-  const handleAddTask = (e) => {
-    e.preventDefault();
-    if (newTaskTitle.length < 3) return alert("Title must be at least 3 characters long.");
-    
-    const selectedDate = new Date(newTaskDate);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (selectedDate < today && !editingTask) return alert("Due date cannot be in the past.");
-
-    if (editingTask) {
-      dispatch({ type: 'EDIT_TASK', payload: { ...editingTask, title: newTaskTitle, dueDate: newTaskDate, assignee: newTaskAssignee, tags: newTaskTags } });
-    } else {
-      dispatch({ type: 'ADD_TASK', payload: { id: nextTaskId++, boardId: board.id, title: newTaskTitle, assignee: newTaskAssignee, dueDate: newTaskDate, tags: newTaskTags.length > 0 ? newTaskTags : ["General"], status: columns[0] } });
+  // Filtered tasks
+  const today = new Date();
+  const filteredTasks = tasks.filter(t => {
+    if (searchQuery && !t.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+    if (assigneeFilter && t.assignee !== assigneeFilter) return false;
+    if (overdueOnly) {
+      const overdue = new Date(t.dueDate) < today && t.status !== doneLabel;
+      if (!overdue) return false;
     }
-    resetForm();
+    return true;
+  });
+
+  // Drag end
+  const handleDragEnd = (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+    dispatch({ type: 'MOVE_TASK', payload: { id: parseInt(draggableId), newStatus: destination.droppableId } });
   };
 
-  // --- LEADER COLUMN MANAGEMENT ---
-  const handleRenameColumn = (index, newName) => {
-    if (!newName) return;
-    const oldName = columns[index];
-    if (oldName === newName) return;
+  const handleAddTask = (taskData) => {
+    const newTask = {
+      id: Date.now(),
+      boardId: board.id,
+      status: columns[0]?.label || 'To Do',
+      ...taskData,
+    };
+    dispatch({ type: 'ADD_TASK', payload: newTask });
+    setTaskModal(false);
+  };
 
-    const newCols = [...columns];
-    newCols[index] = newName;
+  const handleEditTask = (taskData) => {
+    dispatch({ type: 'EDIT_TASK', payload: { ...editingTask, ...taskData } });
+    setEditingTask(null);
+  };
+
+  const handleDeleteTask = (id) => {
+    dispatch({ type: 'DELETE_TASK', payload: id });
+    setDetailTask(null);
+  };
+
+  const handleDeleteBoard = () => {
+    setBoards(prev => prev.filter(b => b.id !== board.id));
+    navigate('/');
+  };
+
+  const handleSaveSettings = (newCols, newTags) => {
     setColumns(newCols);
-    dispatch({ type: 'RENAME_COLUMN', payload: { oldName, newName } }); // Update tasks instantly
+    setBoardTags(newTags);
+    // Sync back to global board state
+    setBoards(prev => prev.map(b => b.id === board.id ? { ...b, columns: newCols, tags: newTags } : b));
   };
-
-  const handleAddColumn = () => setColumns([...columns, `New Column ${columns.length + 1}`]);
-  const handleRemoveColumn = (index) => setColumns(columns.filter((_, i) => i !== index));
-
-  const doneCount = tasks.filter(t => t.status === columns[columns.length - 1]).length;
-  const totalCount = tasks.length;
 
   return (
-    <div className="board-page">
-      <div className="board-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0 }}>{board.title}</h2>
-          <span className="leader-badge">Leader: {board.leader}</span>
-          <span className="progress-badge">{doneCount} of {totalCount} done</span>
-          {isLeader && (
-            <Button variant="secondary" onClick={() => setShowColumnModal(true)}>⚙️ Manage Columns</Button>
-          )}
-        </div>
-        <Button variant="primary" onClick={() => { resetForm(); setShowTaskModal(true); }}>+ Add Task</Button>
-      </div>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
 
-      {/* Task Creation / Editing Modal */}
-      {showTaskModal && (
-        <div className="modal-overlay" onClick={resetForm}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>{editingTask ? 'Edit Task' : 'Add New Task'}</h2>
-            <form onSubmit={handleAddTask} className="modal-form">
-              <div className="form-group">
-                <label>Task Title</label>
-                <input type="text" placeholder="What needs to be done?" value={newTaskTitle} onChange={(e) => setNewTaskTitle(e.target.value)} required />
+      {/* Board Header */}
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-16 z-20">
+        <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="p-2 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              >
+                <ArrowLeft size={18} />
+              </Link>
+              <div>
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{board.title}</h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  {board.members.length} member{board.members.length !== 1 ? 's' : ''} · Leader: {board.leader}
+                </p>
               </div>
-              <div className="form-group">
-                <label>Due Date</label>
-                <input type="date" value={newTaskDate} onChange={(e) => setNewTaskDate(e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label>Assignee</label>
-                <select value={newTaskAssignee} onChange={(e) => setNewTaskAssignee(e.target.value)} required>
-                  <option value="" disabled>Assign to...</option>
-                  {board.members.map(member => <option key={member} value={member}>{member}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label>Tags</label>
-                <div className="checkbox-group" style={{marginTop: '4px'}}>
-                  {board.tags.map(tag => (
-                    <label key={tag} className="tag-checkbox">
-                      <input type="checkbox" checked={newTaskTags.includes(tag)} onChange={() => setNewTaskTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])} />
-                      {tag}
-                    </label>
-                  ))}
-                </div>
-              </div>
-              <div className="modal-actions">
-                <Button type="button" variant="secondary" onClick={resetForm}>Cancel</Button>
-                <Button type="submit" variant="primary">{editingTask ? 'Save Changes' : 'Add Task'}</Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Leader Column Management Modal */}
-      {showColumnModal && (
-        <div className="modal-overlay" onClick={() => setShowColumnModal(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <h2>Manage Columns</h2>
-            <p style={{fontSize: '0.85rem', color: 'var(--text-light)', marginBottom: '20px'}}>Rename your columns below. Tasks will automatically migrate to the new names.</p>
-            <div style={{display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px'}}>
-              {columns.map((col, idx) => (
-                <div key={idx} style={{display: 'flex', gap: '8px'}}>
-                  <input type="text" value={col} onChange={(e) => handleRenameColumn(idx, e.target.value)} />
-                  <Button variant="danger" onClick={() => handleRemoveColumn(idx)}>X</Button>
-                </div>
-              ))}
             </div>
-            <Button variant="secondary" onClick={handleAddColumn} style={{width: '100%', marginBottom: '20px'}}>+ Add Column</Button>
-            <div className="modal-actions">
-              <Button type="button" variant="primary" onClick={() => setShowColumnModal(false)}>Done</Button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Filter Bar */}
-      <div className="filter-bar" style={{ display: 'flex', gap: '16px', marginBottom: '24px', backgroundColor: 'var(--card-bg)', padding: '16px', borderRadius: '8px', border: '1px solid var(--border)', flexWrap: 'wrap' }}>
-        <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
-          <label>Search Tasks</label>
-          <input type="text" placeholder="Search by title..." value={searchQuery} onChange={(e) => updateParam('search', e.target.value)} />
-        </div>
-        <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
-          <label>Assignee</label>
-          <select value={assigneeFilter} onChange={(e) => updateParam('assignee', e.target.value)}>
-            <option value="">All Members</option>
-            {board.members.map(member => <option key={member} value={member}>{member}</option>)}
-          </select>
-        </div>
-        <div className="form-group" style={{ flex: 1, minWidth: '150px' }}>
-          <label>Status</label>
-          <select value={statusFilter} onChange={(e) => updateParam('status', e.target.value)}>
-            <option value="">All Statuses</option>
-            {columns.map(col => <option key={col} value={col}>{col}</option>)}
-          </select>
-        </div>
-        <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '22px' }}>
-          <input type="checkbox" id="overdue-check" checked={overdueFilter} onChange={(e) => updateParam('overdue', e.target.checked ? 'true' : null)} style={{ width: 'auto' }} />
-          <label htmlFor="overdue-check" style={{ margin: 0, cursor: 'pointer' }}>Overdue Only</label>
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '100px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px solid var(--border)' }}><h2 style={{ color: 'var(--text-light)' }}>Loading tasks...</h2></div>
-      ) : error ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', color: 'var(--danger)' }}><h3 style={{ margin: '0 0 8px 0' }}>Error</h3><p style={{ margin: 0 }}>{error}</p></div>
-      ) : filteredTasks.length === 0 ? (
-        <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', backgroundColor: 'var(--card-bg)', borderRadius: '8px', border: '1px dashed var(--border)' }}><h3 style={{ margin: '0 0 8px 0' }}>No tasks found</h3><p style={{ color: 'var(--text-light)', margin: 0 }}>Try adjusting your search or filters.</p></div>
-      ) : (
-        <div className="board">
-          {columns.map((col, colIndex) => {
-            const colTasks = filteredTasks.filter(t => t.status === col);
-            
-            return (
-              <Column key={col} title={col} count={colTasks.length}>
-                {colTasks.map(task => (
-                  <TaskCard 
-                    key={task.id} 
-                    task={task} 
-                    deleteTask={deleteTask} 
-                    editTask={openEditTask}
-                    
-                    columnIndex={colIndex}
-                    totalColumns={columns.length}
-                    
-                    onMoveLeft={colIndex > 0 ? () => moveTask(task.id, columns[colIndex - 1]) : null}
-                    onMoveRight={colIndex < columns.length - 1 ? () => moveTask(task.id, columns[colIndex + 1]) : null}
-                  />
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Member avatars */}
+              <div className="flex -space-x-2">
+                {board.members.slice(0, 4).map(m => (
+                  <div
+                    key={m}
+                    className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold"
+                    title={m}
+                  >
+                    {m.charAt(0).toUpperCase()}
+                  </div>
                 ))}
-              </Column>
-            );
-          })}
+              </div>
+
+              <button
+                onClick={() => setTaskModal(true)}
+                className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+              >
+                <Plus size={16} /> Add Task
+              </button>
+
+              {isLeader && (
+                <>
+                  <button
+                    onClick={() => setSettingsModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Settings size={15} /> Settings
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(true)}
+                    className="flex items-center gap-1.5 px-3 py-2 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Trash2 size={15} /> Delete Board
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1">
+              <span>{doneCount} of {tasks.length} tasks complete</span>
+              <span className="font-semibold text-brand-600 dark:text-brand-400">{progress}%</span>
+            </div>
+            <div className="h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-brand-500 to-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Filter bar */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[160px] max-w-xs">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search tasks..."
+                className="w-full pl-8 pr-3 py-2 text-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="relative min-w-[130px]">
+              <Filter size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+              <select
+                value={assigneeFilter}
+                onChange={e => setAssigneeFilter(e.target.value)}
+                className="pl-7 pr-3 py-2 text-sm bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-brand-500 appearance-none"
+              >
+                <option value="">All members</option>
+                {board.members.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+
+            <label className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={overdueOnly}
+                onChange={e => setOverdueOnly(e.target.checked)}
+                className="accent-red-500"
+              />
+              <AlertTriangle size={13} className="text-red-400" />
+              Overdue only
+            </label>
+          </div>
         </div>
+      </div>
+
+      {/* Kanban Board */}
+      <div className="overflow-x-auto px-4 sm:px-6 lg:px-8 py-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
+          </div>
+        ) : (
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className="flex gap-5 items-start pb-4 min-w-max">
+              {columns.map((col, colIndex) => {
+                const colTasks = filteredTasks.filter(t => t.status === col.label);
+                return (
+                  <Column
+                    key={col.label}
+                    title={col.label}
+                    count={colTasks.length}
+                    color={col.color}
+                  >
+                    {colTasks.map((task, taskIndex) => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        index={taskIndex}
+                        columnIndex={colIndex}
+                        totalColumns={columns.length}
+                        columnColor={col.color}
+                        tagColorMap={tagColorMap}
+                        onDelete={handleDeleteTask}
+                        onOpenDetail={setDetailTask}
+                      />
+                    ))}
+                  </Column>
+                );
+              })}
+            </div>
+          </DragDropContext>
+        )}
+      </div>
+
+      {/* Modals */}
+      {taskModal && (
+        <TaskFormModal
+          board={{ ...board, tags: boardTags }}
+          columns={columns}
+          onClose={() => setTaskModal(false)}
+          onSave={handleAddTask}
+        />
+      )}
+      {editingTask && (
+        <TaskFormModal
+          task={editingTask}
+          board={{ ...board, tags: boardTags }}
+          columns={columns}
+          onClose={() => setEditingTask(null)}
+          onSave={handleEditTask}
+        />
+      )}
+      {detailTask && (
+        <TaskDetailModal
+          task={detailTask}
+          tagColorMap={tagColorMap}
+          onClose={() => setDetailTask(null)}
+          onEdit={(t) => { setDetailTask(null); setEditingTask(t); }}
+          onDelete={handleDeleteTask}
+        />
+      )}
+      {settingsModal && (
+        <BoardSettingsModal
+          columns={columns}
+          setColumns={newCols => handleSaveSettings(newCols, boardTags)}
+          tags={boardTags}
+          setTags={newTags => handleSaveSettings(columns, newTags)}
+          dispatch={dispatch}
+          onClose={() => setSettingsModal(false)}
+        />
+      )}
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete Board?"
+          message={`This will permanently delete "${board.title}" and all its tasks. This cannot be undone.`}
+          confirmLabel="Delete Board"
+          onConfirm={handleDeleteBoard}
+          onClose={() => setConfirmDelete(false)}
+        />
       )}
     </div>
   );
