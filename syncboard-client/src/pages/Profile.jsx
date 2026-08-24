@@ -2,23 +2,12 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { mockUsers, mockTasks } from '../data/mockData';
+import { AVATAR_OPTIONS } from '../data/avatars';
 import { User, Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Save, Camera } from 'lucide-react';
-
-// ─── Avatar options: all gradients written as full literal strings ─────────────
-const AVATAR_OPTIONS = [
-    { id: 'default', gradient: 'from-brand-500 to-brand-700', emoji: null, label: 'Indigo' },
-    { id: 'rose', gradient: 'from-rose-500 to-pink-700', emoji: '🌸', label: 'Rose' },
-    { id: 'amber', gradient: 'from-amber-500 to-orange-600', emoji: '🔥', label: 'Amber' },
-    { id: 'emerald', gradient: 'from-emerald-500 to-teal-600', emoji: '🌿', label: 'Emerald' },
-    { id: 'cyan', gradient: 'from-cyan-500 to-blue-600', emoji: '💎', label: 'Cyan' },
-    { id: 'violet', gradient: 'from-violet-500 to-purple-700', emoji: '⚡', label: 'Violet' },
-    { id: 'slate', gradient: 'from-slate-500 to-slate-700', emoji: '🤖', label: 'Slate' },
-    { id: 'red', gradient: 'from-red-500 to-rose-700', emoji: '🚀', label: 'Red' },
-];
 
 export default function Profile() {
     const { username } = useParams();
-    const { currentUser, boards, pendingInvites, setPendingInvites, setBoards } = useApp();
+    const { currentUser, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
 
     const isOwnProfile = currentUser === username;
     const profileData = mockUsers.find(u => u.username === username);
@@ -29,8 +18,8 @@ export default function Profile() {
     const [bio, setBio] = useState(profileData?.bio || '');
     const [saved, setSaved] = useState(false);
 
-    // Avatar state
-    const [chosenAvatar, setChosenAvatar] = useState(AVATAR_OPTIONS[0]);
+    // Avatar state — initialised from global context so Navbar stays in sync
+    const [chosenAvatar, setChosenAvatar] = useState(() => userAvatar ?? AVATAR_OPTIONS[0]);
     const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
     const userBoards = boards.filter(b => b.members.includes(username));
@@ -39,9 +28,19 @@ export default function Profile() {
     ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 5);
 
     const handleSave = () => {
+        // Push avatar to global context so Navbar reflects immediately
+        setUserAvatar(chosenAvatar);
         setSaved(true);
         setEditing(false);
+        setAvatarPickerOpen(false);
         setTimeout(() => setSaved(false), 3000);
+    };
+
+    const handleCancelEdit = () => {
+        // Reset local avatar to what's currently saved in global context
+        setChosenAvatar(userAvatar ?? AVATAR_OPTIONS[0]);
+        setAvatarPickerOpen(false);
+        setEditing(false);
     };
 
     const handleAcceptInvite = (invite) => {
@@ -85,7 +84,9 @@ export default function Profile() {
                                 >
                                     {chosenAvatar.emoji ?? username.charAt(0).toUpperCase()}
                                 </div>
-                                {isOwnProfile && (
+
+                                {/* Camera overlay — only visible in edit mode */}
+                                {isOwnProfile && editing && (
                                     <button
                                         onClick={() => setAvatarPickerOpen(p => !p)}
                                         className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -96,7 +97,7 @@ export default function Profile() {
                                 )}
 
                                 {/* Avatar picker dropdown */}
-                                {avatarPickerOpen && (
+                                {avatarPickerOpen && editing && (
                                     <div className="absolute left-0 top-[calc(100%+8px)] z-30 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-3 w-52">
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 px-1">Choose an avatar</p>
                                         <div className="grid grid-cols-4 gap-2">
@@ -138,7 +139,7 @@ export default function Profile() {
                                         <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm rounded-lg transition-colors">
                                             <Save size={15} /> Save
                                         </button>
-                                        <button onClick={() => setEditing(false)} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 text-sm rounded-lg transition-colors">
+                                        <button onClick={handleCancelEdit} className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 text-sm rounded-lg transition-colors">
                                             Cancel
                                         </button>
                                     </>
@@ -153,7 +154,7 @@ export default function Profile() {
 
                     {saved && (
                         <div className="mt-4 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg text-sm text-emerald-700 dark:text-emerald-400 flex items-center gap-2">
-                            <CheckCircle size={15} /> Profile saved successfully!
+                            <CheckCircle size={15} /> Profile updated successfully!
                         </div>
                     )}
 
@@ -181,7 +182,7 @@ export default function Profile() {
                     </div>
                 </div>
 
-                {/* Pending Invites (own profile only, sourced from AppContext) */}
+                {/* Pending Invites */}
                 {isOwnProfile && pendingInvites.length > 0 && (
                     <div className={sectionClass}>
                         <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">

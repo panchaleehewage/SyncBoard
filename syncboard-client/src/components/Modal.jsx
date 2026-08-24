@@ -7,10 +7,10 @@ export default function Modal({ title, onClose, children }) {
             onClick={onClose}
         >
             <div
-                className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl animate-slide-up border border-slate-200 dark:border-slate-700"
+                className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-2xl animate-slide-up border border-slate-200 dark:border-slate-700 max-h-[90vh] flex flex-col"
                 onClick={e => e.stopPropagation()}
             >
-                <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700">
+                <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
                     <h2 className="text-xl font-semibold text-slate-900 dark:text-white">{title}</h2>
                     <button
                         onClick={onClose}
@@ -19,7 +19,7 @@ export default function Modal({ title, onClose, children }) {
                         <X size={18} />
                     </button>
                 </div>
-                <div className="px-6 py-5">{children}</div>
+                <div className="px-6 py-5 overflow-y-auto flex-grow">{children}</div>
             </div>
         </div>
     );

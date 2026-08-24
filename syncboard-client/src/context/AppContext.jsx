@@ -1,5 +1,6 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { mockBoards, mockUsers } from '../data/mockData';
+import { AVATAR_OPTIONS } from '../data/avatars';
 
 const AppContext = createContext();
 
@@ -9,10 +10,14 @@ export function AppProvider({ children }) {
     const [pendingInvites, setPendingInvites] = useState([]);
     const [authModal, setAuthModal] = useState(null); // 'login' | 'signup' | null
 
+    // Global avatar state — shared between Profile.jsx and Navbar.jsx
+    const [userAvatar, setUserAvatar] = useState(AVATAR_OPTIONS[0]);
+
     // Re-derive pendingInvites whenever the logged-in user changes
     useEffect(() => {
         if (!currentUser) {
             setPendingInvites([]);
+            setUserAvatar(AVATAR_OPTIONS[0]); // reset avatar on logout
             return;
         }
         const user = mockUsers.find(u => u.username === currentUser);
@@ -25,6 +30,7 @@ export function AppProvider({ children }) {
             boards, setBoards,
             pendingInvites, setPendingInvites,
             authModal, setAuthModal,
+            userAvatar, setUserAvatar,
         }}>
             {children}
         </AppContext.Provider>

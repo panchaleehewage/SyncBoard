@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
+import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
 import Board from './pages/Board';
 import Profile from './pages/Profile';
@@ -18,8 +19,22 @@ export default function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/board/:boardId" element={<Board />} />
-          <Route path="/profile/:username" element={<Profile />} />
+          <Route
+            path="/board/:boardId"
+            element={
+              <ProtectedRoute>
+                <Board />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/:username"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

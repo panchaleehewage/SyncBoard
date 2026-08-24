@@ -13,14 +13,14 @@ import {
 // ─── Colour picker swatch used inside create-board modal ───────────────────────
 function SwatchPicker({ selected, onSelect }) {
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-wrap gap-2 mt-3">
       {COLOR_OPTIONS.map(c => (
         <button
           key={c.key}
           type="button"
           onClick={() => onSelect(c.key)}
           title={c.label}
-          className={`w-5 h-5 rounded-full ${c.swatch} hover:scale-110 transition-transform ring-offset-2 dark:ring-offset-slate-800 ${selected === c.key ? 'ring-2 ring-slate-600 dark:ring-slate-300 scale-110' : ''}`}
+          className={`w-5 h-5 rounded-full ${c.swatch} hover:scale-110 transition-transform ${selected === c.key ? 'ring-2 ring-offset-2 ring-brand-500 dark:ring-offset-slate-800' : ''}`}
         />
       ))}
     </div>
@@ -30,15 +30,14 @@ function SwatchPicker({ selected, onSelect }) {
 // ─── Granular item builder (columns / tags) ────────────────────────────────────
 function ItemBuilder({ items, setItems, placeholder, defaultColors, label }) {
   const [inputVal, setInputVal] = useState('');
-  const [inputColor, setInputColor] = useState(defaultColors[items.length % defaultColors.length]);
+  const [inputColor, setInputColor] = useState(null);
 
   const add = () => {
     if (!inputVal.trim()) return;
-    setItems(prev => {
-      const next = [...prev, { label: inputVal.trim(), color: inputColor }];
-      setInputColor(defaultColors[next.length % defaultColors.length]);
-      return next;
-    });
+    const colorToUse = inputColor ?? defaultColors[0];
+    const newItems = [...items, { label: inputVal.trim(), color: colorToUse }];
+    setItems(newItems);
+    setInputColor(null); // clear selection — user must explicitly pick for the next item
     setInputVal('');
   };
 

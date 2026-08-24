@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { X, Calendar, User, AlertTriangle } from 'lucide-react';
-import { getBorderClass, getTagClasses } from '../data/colors';
+import { getBgClass, getTagClasses } from '../data/colors';
 import ConfirmModal from './ConfirmModal';
 
 export default function TaskCard({ task, index, columnIndex, totalColumns, columnColor, tagColorMap, onDelete, onOpenDetail }) {
@@ -9,7 +9,8 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
 
   const isOverdue = new Date(task.dueDate) < new Date() && columnIndex !== totalColumns - 1;
 
-  const borderColor = isOverdue ? 'border-l-red-500' : getBorderClass(columnColor);
+  // Use bg colour for the accent strip (avoids border-color shorthand override in dark mode)
+  const stripColor = isOverdue ? 'bg-red-500' : getBgClass(columnColor);
 
   return (
     <>
@@ -21,13 +22,16 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
             {...provided.dragHandleProps}
             onClick={() => onOpenDetail(task)}
             className={`
-              group relative rounded-xl border-l-4 ${borderColor}
+              group relative overflow-hidden rounded-xl
               border border-slate-200 dark:border-slate-600/70
-              bg-white dark:bg-slate-800/80 p-4 cursor-pointer
+              bg-white dark:bg-slate-800 p-4 pl-5 cursor-pointer
               shadow-sm hover:shadow-md transition-all duration-200
-              ${snapshot.isDragging ? 'shadow-xl rotate-1 scale-[1.02] opacity-90 dark:bg-slate-700' : ''}
+              ${snapshot.isDragging ? 'shadow-xl rotate-1 scale-[1.02] opacity-90' : ''}
             `}
           >
+            {/* Left colour accent strip — always visible in both light and dark mode */}
+            <div className={`absolute left-0 inset-y-0 w-[4px] ${stripColor} transition-colors duration-200`} />
+
             {/* Delete X */}
             <button
               onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
@@ -77,7 +81,7 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
           title="Delete Task?"
           message={`Are you sure you want to delete "${task.title}"? This cannot be undone.`}
           confirmLabel="Delete"
-          onConfirm={() => onDelete(task.id)}
+          onConfirm={() => { onDelete(task.id); setConfirmDelete(false); }}
           onClose={() => setConfirmDelete(false)}
         />
       )}
