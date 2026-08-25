@@ -142,10 +142,12 @@ export default function Board() {
   };
 
   // Columns and tags now go through the reducer — no stale closure risk
-  const handleSaveSettings = (newCols, newTags) => {
+  const handleSaveSettings = (newTitle, newCols, newTags) => {
     dispatch({ type: 'SET_COLUMNS', payload: newCols });
     dispatch({ type: 'SET_TAGS', payload: newTags });
-    setBoards(prev => prev.map(b => b.id === board.id ? { ...b, columns: newCols, tags: newTags } : b));
+    setBoards(prev => prev.map(b =>
+      b.id === board.id ? { ...b, title: newTitle, columns: newCols, tags: newTags } : b
+    ));
   };
 
   return (
@@ -265,7 +267,7 @@ export default function Board() {
       {taskModal && <TaskFormModal board={{ ...board, tags: boardTags }} columns={columns} onClose={() => setTaskModal(false)} onSave={handleAddTask} />}
       {editingTask && <TaskFormModal task={editingTask} board={{ ...board, tags: boardTags }} columns={columns} onClose={() => setEditingTask(null)} onSave={handleEditTask} />}
       {detailTask && <TaskDetailModal task={detailTask} tagColorMap={tagColorMap} onClose={() => setDetailTask(null)} onEdit={(t) => { setDetailTask(null); setEditingTask(t); }} onDelete={handleDeleteTask} />}
-      {settingsModal && <BoardSettingsModal columns={columns} tags={boardTags} onSave={handleSaveSettings} onClose={() => setSettingsModal(false)} />}
+      {settingsModal && <BoardSettingsModal title={board.title} columns={columns} tags={boardTags} onSave={handleSaveSettings} onClose={() => setSettingsModal(false)} />}
       {confirmDelete && <ConfirmModal title="Delete Board?" message={`Permanently delete "${board.title}"? This cannot be undone.`} confirmLabel="Delete Board" onConfirm={handleDeleteBoard} onClose={() => setConfirmDelete(false)} />}
       {projectComplete && <ProjectCompleteModal board={board} onClose={() => setProjectComplete(false)} />}
     </div>

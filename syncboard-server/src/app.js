@@ -4,6 +4,7 @@ import asyncHandler from './utils/asyncHandler.js';
 import { notFoundHandler, globalErrorHandler } from './middleware/error.middleware.js';
 import taskRoutes from './routes/task.routes.js'; 
 import authRoutes from './routes/auth.routes.js';
+import boardRoutes from './routes/board.routes.js';
 
 const app = express();
 
@@ -15,6 +16,7 @@ app.get('/api/health', (req, res) => {
 });
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/boards', boardRoutes);
 
 // --- ERROR HANDLING MIDDLEWARE ---
 app.use(notFoundHandler);

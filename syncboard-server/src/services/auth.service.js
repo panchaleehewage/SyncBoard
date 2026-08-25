@@ -11,31 +11,37 @@ const signToken = (id) => {
 
 export const authService = {
   async register(email, password, username) {
-    const existingUser = await userRepository.findByEmail(email);
-    if (existingUser) {
+    const existingEmail = await userRepository.findByEmail(email);
+    if (existingEmail) {
       throw new AppError('Email already in use', 409);
+    }
+
+    const existingUsername = await userRepository.findByUsername(username);
+    if (existingUsername) {
+      throw new AppError('Username already taken', 409);
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const newUser = await userRepository.create({ 
-      email, 
-      password: hashedPassword, 
-      username 
+    // Fix 1c: repository.create() adds defaults for bio, avatar, pendingInvites
+    const newUser = await userRepository.create({
+      email,
+      password: hashedPassword,
+      username,
     });
 
     const { password: _, ...userWithoutPassword } = newUser;
-
     const token = signToken(newUser.id);
 
     return { user: userWithoutPassword, token };
   },
 
-  async login(email, password) {
-    const user = await userRepository.findByEmail(email);
-    
+  // Fix 1d: Accept username (not email) to match the frontend AuthModal login form
+  async login(username, password) {
+    const user = await userRepository.findByUsername(username);
+
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      throw new AppError('Incorrect email or password', 401);
+      throw new AppError('Incorrect username or password', 401);
     }
 
     const { password: _, ...userWithoutPassword } = user;

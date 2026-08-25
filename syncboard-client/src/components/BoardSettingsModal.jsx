@@ -101,7 +101,8 @@ function ItemsPanel({ items, setItems, placeholder, defaultColorKey, newLabel, s
 }
 
 // ─── Main BoardSettingsModal ───────────────────────────────────────────────────
-export default function BoardSettingsModal({ columns, tags, onSave, onClose }) {
+export default function BoardSettingsModal({ title, columns, tags, onSave, onClose }) {
+    const [localTitle, setLocalTitle] = useState(title || '');
     const [activeTab, setActiveTab] = useState('columns');
     const [localCols, setLocalCols] = useState(() => columns.map(c => ({ ...c })));
     const [localTags, setLocalTags] = useState(() => tags.map(t => ({ ...t })));
@@ -114,6 +115,7 @@ export default function BoardSettingsModal({ columns, tags, onSave, onClose }) {
 
     const handleSave = () => {
         onSave(
+            localTitle.trim() || title,
             localCols.filter(c => c.label.trim()),
             localTags.filter(t => t.label.trim())
         );
@@ -127,6 +129,20 @@ export default function BoardSettingsModal({ columns, tags, onSave, onClose }) {
 
     return (
         <Modal title="Board Settings" onClose={onClose}>
+            {/* Board Title Input */}
+            <div className="mb-5">
+                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                    Board Title
+                </label>
+                <input
+                    type="text"
+                    value={localTitle}
+                    onChange={e => setLocalTitle(e.target.value)}
+                    placeholder="Board title…"
+                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors text-sm font-medium"
+                />
+            </div>
+
             {/* Tabs */}
             <div className="flex gap-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1 mb-5">
                 {tabs.map(tab => (
