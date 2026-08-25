@@ -16,7 +16,7 @@ import { ArrowLeft, Plus, Settings, Trash2, Search, AlertTriangle, Filter, Shiel
 export default function Board() {
   const { boardId } = useParams();
   const navigate = useNavigate();
-  const { currentUser, boards, setBoards } = useApp();
+  const { currentUser, authToken, boards, setBoards } = useApp();
 
   const board = boards.find(b => b.id === parseInt(boardId));
 
@@ -121,9 +121,30 @@ export default function Board() {
     }
   };
 
-  const handleAddTask = (taskData) => {
-    dispatch({ type: 'ADD_TASK', payload: { id: Date.now(), boardId: board.id, status: columns[0]?.label || 'To Do', ...taskData } });
+  const handleAddTask = async (taskData) => {
+    const newTask = { 
+      id: Date.now(), 
+      boardId: board.id, 
+      status: columns[0]?.label || 'To Do', 
+      ...taskData 
+    };
+
+    dispatch({ type: 'ADD_TASK', payload: newTask });
     setTaskModal(false);
+
+    try {
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(newTask)
+      });
+    } catch (err) {
+      console.error("Failed to save task to database", err);
+      alert("Warning: Task was not saved to the server.");
+    }
   };
 
   const handleEditTask = (taskData) => {
@@ -142,11 +163,11 @@ export default function Board() {
   };
 
   // Columns and tags now go through the reducer — no stale closure risk
-  const handleSaveSettings = (newTitle, newCols, newTags) => {
+  const handleSaveSettings = (newTitle, newMembers, newCols, newTags) => {
     dispatch({ type: 'SET_COLUMNS', payload: newCols });
     dispatch({ type: 'SET_TAGS', payload: newTags });
     setBoards(prev => prev.map(b =>
-      b.id === board.id ? { ...b, title: newTitle, columns: newCols, tags: newTags } : b
+      b.id === board.id ? { ...b, title: newTitle, members: newMembers, columns: newCols, tags: newTags } : b
     ));
   };
 
@@ -267,7 +288,7 @@ export default function Board() {
       {taskModal && <TaskFormModal board={{ ...board, tags: boardTags }} columns={columns} onClose={() => setTaskModal(false)} onSave={handleAddTask} />}
       {editingTask && <TaskFormModal task={editingTask} board={{ ...board, tags: boardTags }} columns={columns} onClose={() => setEditingTask(null)} onSave={handleEditTask} />}
       {detailTask && <TaskDetailModal task={detailTask} tagColorMap={tagColorMap} onClose={() => setDetailTask(null)} onEdit={(t) => { setDetailTask(null); setEditingTask(t); }} onDelete={handleDeleteTask} />}
-      {settingsModal && <BoardSettingsModal title={board.title} columns={columns} tags={boardTags} onSave={handleSaveSettings} onClose={() => setSettingsModal(false)} />}
+      {settingsModal && <BoardSettingsModal title={board.title} members={board.members} columns={columns} tags={boardTags} onSave={handleSaveSettings} onClose={() => setSettingsModal(false)} />}
       {confirmDelete && <ConfirmModal title="Delete Board?" message={`Permanently delete "${board.title}"? This cannot be undone.`} confirmLabel="Delete Board" onConfirm={handleDeleteBoard} onClose={() => setConfirmDelete(false)} />}
       {projectComplete && <ProjectCompleteModal board={board} onClose={() => setProjectComplete(false)} />}
     </div>

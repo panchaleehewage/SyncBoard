@@ -3,14 +3,14 @@ import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { mockUsers, mockTasks } from '../data/mockData';
 import { AVATAR_OPTIONS } from '../data/avatars';
-import { User, Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Save, Camera } from 'lucide-react';
+import { Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Save, Camera } from 'lucide-react';
 
 export default function Profile() {
     const { username } = useParams();
-    const { currentUser, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
+    const { currentUser, currentUserData, updateProfile, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
 
     const isOwnProfile = currentUser === username;
-    const profileData = mockUsers.find(u => u.username === username);
+    const profileData = isOwnProfile ? currentUserData : mockUsers.find(u => u.username === username);
 
     const [editing, setEditing] = useState(false);
     const [name, setName] = useState(profileData?.username || username);
@@ -27,13 +27,19 @@ export default function Profile() {
         t => t.assignee === username && t.status !== 'Done'
     ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 5);
 
-    const handleSave = () => {
-        // Push avatar to global context so Navbar reflects immediately
-        setUserAvatar(chosenAvatar);
-        setSaved(true);
-        setEditing(false);
-        setAvatarPickerOpen(false);
-        setTimeout(() => setSaved(false), 3000);
+    const handleSave = async () => {
+        try {
+            await updateProfile({ bio, avatar: chosenAvatar });
+            
+            setUserAvatar(chosenAvatar);
+            setSaved(true);
+            setEditing(false);
+            setAvatarPickerOpen(false);
+            setTimeout(() => setSaved(false), 3000);
+        } catch (error) {
+            console.error(error);
+            alert("Failed to save profile.");
+        }
     };
 
     const handleCancelEdit = () => {

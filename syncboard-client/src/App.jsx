@@ -10,7 +10,17 @@ import NotFound from './pages/NotFound';
 import './App.css';
 
 export default function App() {
-  const { currentUser } = useApp();
+  const { authLoading } = useApp();
+
+  // While restoring session from localStorage (GET /api/auth/me in-flight),
+  // show a neutral splash so the user never sees a logged-out flash.
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300 font-sans">

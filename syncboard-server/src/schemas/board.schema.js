@@ -16,4 +16,5 @@ export const updateBoardSchema = z.object({
     title: z.string().min(1, "Title cannot be empty").optional(),
     columns: z.array(columnSchema).optional(),
     tags: z.array(tagSchema).optional(),
+    members: z.array(z.string()).min(1, "Board must have at least one member").optional(),
 });

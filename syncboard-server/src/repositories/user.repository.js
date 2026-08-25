@@ -33,5 +33,12 @@ export const userRepository = {
     if (userIndex === -1) return null;
     users[userIndex] = { ...users[userIndex], ...updates };
     return users[userIndex];
+  },
+
+  async searchByUsername(query, excludeId) {
+    const q = (query || '').toLowerCase();
+    return users
+      .filter(u => u.id !== excludeId && u.username.toLowerCase().includes(q))
+      .map(({ password: _, ...u }) => u);
   }
 };

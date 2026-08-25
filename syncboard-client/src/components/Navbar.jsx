@@ -7,12 +7,12 @@ import ConfirmModal from './ConfirmModal';
 
 export default function Navbar() {
     const { isDarkMode, toggleTheme } = useTheme();
-    const { currentUser, setCurrentUser, setAuthModal, userAvatar } = useApp();
+    const { currentUser, logout, setAuthModal, userAvatar } = useApp();
     const navigate = useNavigate();
     const [confirmLogout, setConfirmLogout] = useState(false);
 
     const handleLogout = () => {
-        setCurrentUser(null);
+        logout();
         setConfirmLogout(false);
         navigate('/');
     };

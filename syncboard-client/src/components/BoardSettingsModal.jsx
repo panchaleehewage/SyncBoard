@@ -1,7 +1,9 @@
-import { useState } from 'react';
-import { Plus, X, Check } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, X, Check, Search } from 'lucide-react';
 import Modal from './Modal';
 import { COLOR_OPTIONS, getBgClass } from '../data/colors';
+import { apiSearchUsers } from '../api/users.api';
+import { useApp } from '../context/AppContext';
 
 // ─── Colour swatch picker ──────────────────────────────────────────────────────
 function SwatchPicker({ selected, onSelect }) {
@@ -101,48 +103,64 @@ function ItemsPanel({ items, setItems, placeholder, defaultColorKey, newLabel, s
 }
 
 // ─── Main BoardSettingsModal ───────────────────────────────────────────────────
-export default function BoardSettingsModal({ title, columns, tags, onSave, onClose }) {
+export default function BoardSettingsModal({ title, members = [], columns, tags, onSave, onClose }) {
+    const { authToken, currentUser } = useApp();
     const [localTitle, setLocalTitle] = useState(title || '');
-    const [activeTab, setActiveTab] = useState('columns');
+    const [activeTab, setActiveTab] = useState('general'); // Default to new tab
     const [localCols, setLocalCols] = useState(() => columns.map(c => ({ ...c })));
     const [localTags, setLocalTags] = useState(() => tags.map(t => ({ ...t })));
+    const [localMembers, setLocalMembers] = useState(() => [...members]);
 
-    // Input state for both tabs lives here so tab switching doesn't wipe unsaved text/color
     const [colNewLabel, setColNewLabel] = useState('');
     const [colNewColor, setColNewColor] = useState(null); // null = no pre-selection
     const [tagNewLabel, setTagNewLabel] = useState('');
     const [tagNewColor, setTagNewColor] = useState(null); // null = no pre-selection
 
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+
+    useEffect(() => {
+        if (searchQuery.trim().length < 2) {
+            setSearchResults([]);
+            return;
+        }
+        const delayDebounceFn = setTimeout(async () => {
+            try {
+                const results = await apiSearchUsers(searchQuery, authToken);
+                setSearchResults(results);
+            } catch (err) {
+                console.error("Search failed", err);
+            }
+        }, 300);
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery, authToken]);
+
+    const addMember = (username) => {
+        if (!localMembers.includes(username)) {
+            setLocalMembers(prev => [...prev, username]);
+        }
+        setSearchQuery('');
+        setSearchResults([]);
+    };
+
     const handleSave = () => {
         onSave(
             localTitle.trim() || title,
+            localMembers, 
             localCols.filter(c => c.label.trim()),
             localTags.filter(t => t.label.trim())
         );
         onClose();
     };
-
+    
     const tabs = [
+        { id: 'general', label: 'General' },
         { id: 'columns', label: 'Columns' },
         { id: 'tags', label: 'Tags' },
     ];
 
     return (
         <Modal title="Board Settings" onClose={onClose}>
-            {/* Board Title Input */}
-            <div className="mb-5">
-                <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
-                    Board Title
-                </label>
-                <input
-                    type="text"
-                    value={localTitle}
-                    onChange={e => setLocalTitle(e.target.value)}
-                    placeholder="Board title…"
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors text-sm font-medium"
-                />
-            </div>
-
             {/* Tabs */}
             <div className="flex gap-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1 mb-5">
                 {tabs.map(tab => (
@@ -156,6 +174,76 @@ export default function BoardSettingsModal({ title, columns, tags, onSave, onClo
                     </button>
                 ))}
             </div>
+
+            {/* --- GENERAL TAB --- */}
+            {activeTab === 'general' && (
+                <div className="space-y-5 min-h-[250px]">
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                            Board Title
+                        </label>
+                        <input
+                            type="text"
+                            value={localTitle}
+                            onChange={e => setLocalTitle(e.target.value)}
+                            placeholder="Board title…"
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors text-sm font-medium"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
+                            Manage Teammates
+                        </label>
+                        
+                        {/* Current Members */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {localMembers.map(member => (
+                                <div key={member} className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center gap-2">
+                                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{member}</span>
+                                    {member !== currentUser && (
+                                        <button onClick={() => setLocalMembers(prev => prev.filter(m => m !== member))} className="text-slate-400 hover:text-red-500">
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="relative">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search size={16} className="text-slate-400" />
+                            </div>
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Search by username..."
+                                className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
+                            />
+                            
+                            {/* Search Results Dropdown */}
+                            {searchResults.length > 0 && (
+                                <div className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden">
+                                    {searchResults.map(user => (
+                                        <button
+                                            key={user.id}
+                                            onClick={() => addMember(user.username)}
+                                            className="w-full px-4 py-2.5 text-left text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-600 flex items-center gap-3 transition-colors"
+                                        >
+                                            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                                {user.username.charAt(0).toUpperCase()}
+                                            </div>
+                                            {user.username}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {activeTab === 'columns' && (
                 <ItemsPanel

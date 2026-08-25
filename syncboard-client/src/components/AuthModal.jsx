@@ -1,46 +1,45 @@
-import { useState } from 'react';
-import { Globe2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Globe2, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { mockUsers } from '../data/mockData';
 import Modal from './Modal';
 
 export default function AuthModal() {
-    const { authModal, setAuthModal, setCurrentUser } = useApp();
+    const { authModal, setAuthModal, login, register } = useApp();
     const [error, setError] = useState('');
-
-    if (!authModal) return null;
+    const [loading, setLoading] = useState(false);
 
     const isLogin = authModal === 'login';
 
-    const handleAuth = (e) => {
+    // Clear error whenever user switches between Login ↔ Sign Up views
+    useEffect(() => { setError(''); }, [isLogin]);
+
+    if (!authModal) return null;
+
+    const handleAuth = async (e) => {
         e.preventDefault();
         setError('');
+        setLoading(true);
+
         const username = e.target.username.value.trim();
         const password = e.target.password.value;
 
-        if (isLogin) {
-            const user = mockUsers.find(u => u.username === username && u.password === password);
-            if (user) {
-                setCurrentUser(username);
-                setAuthModal(null);
+        try {
+            if (isLogin) {
+                await login(username, password);
             } else {
-                setError('Invalid username or password.');
+                const email = e.target.email?.value?.trim() || '';
+                if (!email) { setError('Email is required.'); setLoading(false); return; }
+                await register(username, email, password);
             }
-        } else {
-            // Mock sign up — just sets the user directly
-            if (!username || username.length < 3) {
-                setError('Username must be at least 3 characters.');
-                return;
-            }
-            setCurrentUser(username);
-            setAuthModal(null);
+            // On success AppContext closes the modal via setAuthModal(null)
+        } catch (err) {
+            setError(err.message || 'Something went wrong. Please try again.');
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleGoogleAuth = () => {
-        setCurrentUser('GoogleUser');
-        setAuthModal(null);
-    };
+    const inputClass = "w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors text-sm";
 
     return (
         <Modal title={isLogin ? 'Welcome back' : 'Create an account'} onClose={() => setAuthModal(null)}>
@@ -58,7 +57,8 @@ export default function AuthModal() {
                             name="email"
                             type="email"
                             placeholder="you@example.com"
-                            className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors text-sm"
+                            required
+                            className={inputClass}
                         />
                     </div>
                 )}
@@ -70,7 +70,8 @@ export default function AuthModal() {
                         type="text"
                         placeholder={isLogin ? 'Your username' : 'Choose a username'}
                         required
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors text-sm"
+                        minLength={3}
+                        className={inputClass}
                     />
                 </div>
 
@@ -81,14 +82,17 @@ export default function AuthModal() {
                         type="password"
                         placeholder="••••••••"
                         required
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-colors text-sm"
+                        minLength={6}
+                        className={inputClass}
                     />
                 </div>
 
                 <button
                     type="submit"
-                    className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg transition-colors shadow-sm text-sm"
+                    disabled={loading}
+                    className="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors shadow-sm text-sm flex items-center justify-center gap-2"
                 >
+                    {loading && <Loader2 size={16} className="animate-spin" />}
                     {isLogin ? 'Login' : 'Create Account'}
                 </button>
 
@@ -103,8 +107,9 @@ export default function AuthModal() {
 
                 <button
                     type="button"
-                    onClick={handleGoogleAuth}
-                    className="w-full py-2.5 px-4 flex items-center justify-center gap-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300"
+                    disabled={loading}
+                    onClick={() => setError('Google sign-in coming soon.')}
+                    className="w-full py-2.5 px-4 flex items-center justify-center gap-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-60 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
                     <Globe2 size={18} className="text-brand-500" />
                     Continue with Google

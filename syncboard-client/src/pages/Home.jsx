@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { mockUsers } from '../data/mockData';
+import { apiSearchUsers } from '../api/users.api';
+import { useEffect } from 'react';
 import { COLOR_OPTIONS, DEFAULT_COL_COLORS, DEFAULT_TAG_COLORS, getTagClasses, getBgClass } from '../data/colors';
 import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
@@ -94,7 +96,7 @@ function ItemBuilder({ items, setItems, placeholder, defaultColors, label }) {
 
 // ─── Create Board Modal ────────────────────────────────────────────────────────
 function CreateBoardModal({ onClose, onCreate }) {
-  const { currentUser } = useApp();
+  const { currentUser, authToken } = useApp();
   const [title, setTitle] = useState('');
   const [columns, setColumns] = useState([
     { label: 'To Do', color: 'violet' },
@@ -107,12 +109,24 @@ function CreateBoardModal({ onClose, onCreate }) {
   const [memberSuggestions, setMemberSuggestions] = useState([]);
   const [formError, setFormError] = useState('');
 
+  useEffect(() => {
+    if (memberInput.trim().length < 2) {
+      setMemberSuggestions([]);
+      return;
+    }
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const results = await apiSearchUsers(memberInput, authToken);
+        setMemberSuggestions(results.filter(u => !members.includes(u.username)));
+      } catch (err) {
+        console.error("Search failed", err);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [memberInput, authToken, members]);
+
   const handleMemberSearch = (val) => {
     setMemberInput(val);
-    if (!val.trim()) { setMemberSuggestions([]); return; }
-    setMemberSuggestions(
-      mockUsers.filter(u => u.username.toLowerCase().includes(val.toLowerCase()) && !members.includes(u.username))
-    );
   };
 
   const addMember = (username) => {
@@ -319,13 +333,13 @@ export default function Home() {
                 <div className="p-4 flex gap-3 overflow-x-auto bg-slate-100 dark:bg-slate-800">
                   {[
                     {
-                      title: 'Logistics',
+                      title: 'To Do',
                       color: 'blue',
                       tasks: ['Book Conference Venue', 'Order Catering', 'Arrange Transport'],
                       tags: ['Logistics', 'Logistics', 'Logistics'],
                     },
                     {
-                      title: 'Marketing',
+                      title: 'In Progress',
                       color: 'orange',
                       tasks: ['Design Event Poster', 'Social Media Campaign'],
                       tags: ['Marketing', 'Marketing'],
