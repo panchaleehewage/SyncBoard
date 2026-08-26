@@ -235,7 +235,7 @@ function CreateBoardModal({ onClose, onCreate }) {
 // ─── Main Home Component ───────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
-  const { currentUser, boards, setBoards, pendingInvites, setPendingInvites, setAuthModal } = useApp();
+  const { currentUser, authToken, boards, setBoards, pendingInvites, setPendingInvites, setAuthModal, userAvatar } = useApp();
 
   const [createBoardOpen, setCreateBoardOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
@@ -255,18 +255,30 @@ export default function Home() {
     setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
   };
 
-  const handleCreateBoard = (data) => {
-    const newBoard = {
-      id: Date.now(),
-      title: data.title,
-      leader: currentUser,
-      members: data.members,
-      columns: data.columns,
-      tags: data.tags,
-    };
-    setBoards(prev => [...prev, newBoard]);
-    setCreateBoardOpen(false);
-    navigate(`/board/${newBoard.id}`);
+  const handleCreateBoard = async (data) => {
+    try {
+      const res = await fetch('/api/boards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({
+          title: data.title,
+          columns: data.columns,
+          tags: data.tags,
+          members: data.members,
+        }),
+      });
+      if (!res.ok) throw new Error('Server error creating board');
+      const { data: savedBoard } = await res.json();
+      setBoards(prev => [...prev, savedBoard]);
+      setCreateBoardOpen(false);
+      navigate(`/board/${savedBoard.id}`);
+    } catch (err) {
+      console.error('Failed to create board', err);
+      alert('Could not create board. Please try again.');
+    }
   };
 
   const handleDeleteBoard = (boardId) => {
@@ -440,7 +452,7 @@ export default function Home() {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white">
-              Welcome back, <span className="text-brand-600 dark:text-brand-400">{currentUser}</span> 👋
+              Welcome, <span className="text-brand-600 dark:text-brand-400">{currentUser}</span> 👋
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Here's what's happening across your workspaces.</p>
           </div>
@@ -552,8 +564,14 @@ export default function Home() {
                       <div className="flex items-center justify-between">
                         <div className="flex -space-x-2">
                           {board.members.slice(0, 4).map(m => (
-                            <div key={m} className="w-7 h-7 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-xs font-bold" title={m}>
-                              {m.charAt(0).toUpperCase()}
+                            <div
+                              key={m}
+                              className={`w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-xs font-bold ${m === currentUser ? `bg-gradient-to-br ${userAvatar.gradient}` : 'bg-gradient-to-br from-brand-400 to-brand-700'}`}
+                              title={m}
+                            >
+                              {m === currentUser
+                                ? <span style={{ fontSize: userAvatar.emoji ? '0.8rem' : '0.65rem' }}>{userAvatar.emoji ?? m.charAt(0).toUpperCase()}</span>
+                                : m.charAt(0).toUpperCase()}
                             </div>
                           ))}
                         </div>

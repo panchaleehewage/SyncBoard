@@ -4,6 +4,7 @@ import Modal from './Modal';
 import { COLOR_OPTIONS, getBgClass } from '../data/colors';
 import { apiSearchUsers } from '../api/users.api';
 import { useApp } from '../context/AppContext';
+import ConfirmModal from './ConfirmModal';
 
 // ─── Colour swatch picker ──────────────────────────────────────────────────────
 function SwatchPicker({ selected, onSelect }) {
@@ -110,6 +111,7 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
     const [localCols, setLocalCols] = useState(() => columns.map(c => ({ ...c })));
     const [localTags, setLocalTags] = useState(() => tags.map(t => ({ ...t })));
     const [localMembers, setLocalMembers] = useState(() => [...members]);
+    const [confirmSave, setConfirmSave] = useState(false);
 
     const [colNewLabel, setColNewLabel] = useState('');
     const [colNewColor, setColNewColor] = useState(null); // null = no pre-selection
@@ -144,15 +146,20 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
     };
 
     const handleSave = () => {
+        setConfirmSave(true);
+    };
+
+    const executeSave = () => {
         onSave(
             localTitle.trim() || title,
-            localMembers, 
+            localMembers,
             localCols.filter(c => c.label.trim()),
             localTags.filter(t => t.label.trim())
         );
         onClose();
+        setConfirmSave(false);
     };
-    
+
     const tabs = [
         { id: 'general', label: 'General' },
         { id: 'columns', label: 'Columns' },
@@ -195,7 +202,7 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
                         <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                             Manage Teammates
                         </label>
-                        
+
                         {/* Current Members */}
                         <div className="flex flex-wrap gap-2 mb-3">
                             {localMembers.map(member => (
@@ -222,7 +229,7 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
                                 placeholder="Search by username..."
                                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                             />
-                            
+
                             {/* Search Results Dropdown */}
                             {searchResults.length > 0 && (
                                 <div className="absolute z-10 left-0 right-0 mt-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl shadow-lg overflow-hidden">
@@ -278,6 +285,17 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
                     <Check size={15} /> Save Settings
                 </button>
             </div>
+
+            {confirmSave && (
+                <ConfirmModal
+                    title="Save Changes?"
+                    message="Are you sure you want to save these changes to the board settings?"
+                    confirmLabel="Save"
+                    variant="info"
+                    onConfirm={executeSave}
+                    onClose={() => setConfirmSave(false)}
+                />
+            )}
         </Modal>
     );
 }

@@ -11,6 +11,14 @@ const tagSchema = z.object({
     color: z.string().min(1, "Tag color is required"),
 });
 
+// Schema for creating a new board
+export const createBoardSchema = z.object({
+    title: z.string().min(1, "Title is required"),
+    columns: z.array(columnSchema).min(1, "At least one column is required"),
+    tags: z.array(tagSchema).optional().default([]),
+    members: z.array(z.string()).optional().default([]),
+});
+
 // Fix 2f: Whitelist only the fields a client is allowed to update on a board
 export const updateBoardSchema = z.object({
     title: z.string().min(1, "Title cannot be empty").optional(),

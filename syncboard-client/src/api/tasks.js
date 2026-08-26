@@ -1,9 +1,9 @@
-import { mockTasks } from '../data/mockData';
+const API = '/api/tasks';
 
-export const getTasks = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(mockTasks);
-    }, 800);
+export const getTasks = async (token) => {
+  const res = await fetch(API, {
+    headers: { Authorization: `Bearer ${token}` },
   });
+  if (!res.ok) throw new Error('Failed to fetch tasks');
+  return res.json();
 };

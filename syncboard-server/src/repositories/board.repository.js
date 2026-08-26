@@ -3,6 +3,7 @@
 // Fix 2c: Add "tags" arrays to all boards
 // Fix 2d: Sync all 3 boards and their members/leaders with the frontend mockData.js
 
+let nextId = 100;
 const boards = [
   {
     id: 1,
@@ -69,6 +70,12 @@ export const boardRepository = {
 
   async findAllByMember(username) {
     return boards.filter(b => b.members.includes(username));
+  },
+
+  async create(boardData) {
+    const newBoard = { id: nextId++, ...boardData };
+    boards.push(newBoard);
+    return newBoard;
   },
 
   // Fix 2f: update() is called via the controller which now validates the body first

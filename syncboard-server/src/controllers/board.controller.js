@@ -22,6 +22,15 @@ export const boardController = {
   }),
 
   // Fix 2f: Body is now pre-validated by updateBoardSchema before reaching here
+  createBoard: asyncHandler(async (req, res) => {
+    const { title, columns, tags = [], members = [] } = req.body;
+    const leader = req.user.username;
+    // Ensure the creator is always in the members list
+    const finalMembers = members.includes(leader) ? members : [leader, ...members];
+    const newBoard = await boardRepository.create({ title, columns, tags, members: finalMembers, leader });
+    res.status(201).json({ status: 'success', data: newBoard });
+  }),
+
   updateBoard: asyncHandler(async (req, res) => {
     const board = await boardRepository.findById(req.params.id);
     if (!board) {

@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { mockUsers, mockTasks } from '../data/mockData';
+import { mockUsers } from '../data/mockData';
+import { getTasks } from '../api/tasks';
 import { AVATAR_OPTIONS } from '../data/avatars';
 import { Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Save, Camera } from 'lucide-react';
 
 export default function Profile() {
     const { username } = useParams();
-    const { currentUser, currentUserData, updateProfile, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
+    const { currentUser, currentUserData, authToken, updateProfile, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
 
     const isOwnProfile = currentUser === username;
     const profileData = isOwnProfile ? currentUserData : mockUsers.find(u => u.username === username);
@@ -22,15 +23,29 @@ export default function Profile() {
     const [chosenAvatar, setChosenAvatar] = useState(() => userAvatar ?? AVATAR_OPTIONS[0]);
     const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
-    const userBoards = boards.filter(b => b.members.includes(username));
-    const upcomingTasks = mockTasks.filter(
-        t => t.assignee === username && t.status !== 'Done'
-    ).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).slice(0, 5);
+    // Fetch real tasks for the upcoming tasks section (only possible for own profile)
+    const [realTasks, setRealTasks] = useState([]);
+    const [tasksLoading, setTasksLoading] = useState(true);
+    useEffect(() => {
+        if (!isOwnProfile || !authToken) {
+            setTasksLoading(false);
+            return;
+        }
+        getTasks(authToken)
+            .then(res => { setRealTasks(res.data); setTasksLoading(false); })
+            .catch(err => { console.error('Failed to fetch tasks for profile', err); setTasksLoading(false); });
+    }, [isOwnProfile, authToken]);
+
+    const userBoards = (boards || []).filter(b => b.members.includes(username));
+    const upcomingTasks = (realTasks || [])
+        .filter(t => t.assignee === username && t.status !== 'Done')
+        .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
+        .slice(0, 5);
 
     const handleSave = async () => {
         try {
             await updateProfile({ bio, avatar: chosenAvatar });
-            
+
             setUserAvatar(chosenAvatar);
             setSaved(true);
             setEditing(false);
@@ -62,7 +77,7 @@ export default function Profile() {
         setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
     };
 
-    if (!profileData && !username) {
+    if (!profileData) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
                 <p className="text-slate-500 dark:text-slate-400">User not found.</p>
@@ -250,7 +265,11 @@ export default function Profile() {
                             <Calendar size={16} className="text-amber-500" />
                             Upcoming Tasks
                         </h2>
-                        {upcomingTasks.length === 0 ? (
+                        {tasksLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                                <div className="animate-spin w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full" />
+                            </div>
+                        ) : upcomingTasks.length === 0 ? (
                             <p className="text-sm text-slate-400">No upcoming tasks.</p>
                         ) : (
                             <div className="space-y-2">

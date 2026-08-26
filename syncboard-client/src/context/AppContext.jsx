@@ -62,6 +62,21 @@ export function AppProvider({ children }) {
             .finally(() => setAuthLoading(false));
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+    // ── Global Board Refetch ──────────────────────────────────────────────────
+    useEffect(() => {
+        if (!authToken) return;
+        fetch('/api/boards', {
+            headers: { Authorization: `Bearer ${authToken}` }
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    setBoards(data.data);
+                }
+            })
+            .catch(console.error);
+    }, [authToken]);
+
     // ── Auth actions exposed to the rest of the app ───────────────────────────
     const login = useCallback(async (username, password) => {
         const { user, token } = await apiLogin(username, password);

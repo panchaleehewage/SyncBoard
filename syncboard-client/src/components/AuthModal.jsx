@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Globe2, Loader2 } from 'lucide-react';
+import { Globe2, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from './Modal';
 
@@ -7,11 +7,12 @@ export default function AuthModal() {
     const { authModal, setAuthModal, login, register } = useApp();
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const isLogin = authModal === 'login';
 
-    // Clear error whenever user switches between Login ↔ Sign Up views
-    useEffect(() => { setError(''); }, [isLogin]);
+    // Clear error & reset password visibility whenever user switches between Login ↔ Sign Up views
+    useEffect(() => { setError(''); setShowPassword(false); }, [isLogin]);
 
     if (!authModal) return null;
 
@@ -77,14 +78,23 @@ export default function AuthModal() {
 
                 <div>
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">Password</label>
-                    <input
-                        name="password"
-                        type="password"
-                        placeholder="••••••••"
-                        required
-                        minLength={6}
-                        className={inputClass}
-                    />
+                    <div className="relative">
+                        <input
+                            name="password"
+                            type={showPassword ? "text" : "password"}
+                            placeholder="••••••••"
+                            required
+                            minLength={6}
+                            className={inputClass}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                        >
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                    </div>
                 </div>
 
                 <button

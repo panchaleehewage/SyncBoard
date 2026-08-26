@@ -16,7 +16,7 @@ import { ArrowLeft, Plus, Settings, Trash2, Search, AlertTriangle, Filter, Shiel
 export default function Board() {
   const { boardId } = useParams();
   const navigate = useNavigate();
-  const { currentUser, authToken, boards, setBoards } = useApp();
+  const { currentUser, authToken, boards, setBoards, userAvatar } = useApp();
 
   const board = boards.find(b => b.id === parseInt(boardId));
 
@@ -43,6 +43,7 @@ export default function Board() {
   const [settingsModal, setSettingsModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [projectComplete, setProjectComplete] = useState(false);
+  const [confirmDeleteTaskId, setConfirmDeleteTaskId] = useState(null);
 
   const isLeader = currentUser === board?.leader;
 
@@ -50,11 +51,16 @@ export default function Board() {
   const tagColorMap = Object.fromEntries(boardTags.map(t => [t.label, t.color]));
 
   useEffect(() => {
-    getTasks().then(all => {
-      dispatch({ type: 'SET_TASKS', payload: all.filter(t => t.boardId === parseInt(boardId)) });
-      setLoading(false);
-    });
-  }, [boardId]);
+    getTasks(authToken)
+      .then(all => {
+        dispatch({ type: 'SET_TASKS', payload: all.data.filter(t => t.boardId === parseInt(boardId)) });
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load tasks', err);
+        setLoading(false);
+      });
+  }, [boardId, authToken]);
 
   // ── Board not found ─────────────────────────────────────────────────────────
   if (!board) {
@@ -105,7 +111,7 @@ export default function Board() {
   });
 
   // ── Drag end with project completion check ──────────────────────────────────
-  const handleDragEnd = (result) => {
+  const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
@@ -119,14 +125,27 @@ export default function Board() {
     if (doneLabel && simulatedTasks.length > 0 && simulatedTasks.every(t => t.status === doneLabel)) {
       setProjectComplete(true);
     }
+
+    try {
+      await fetch(`/api/tasks/${movedId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch (err) {
+      console.error("Failed to update task status on server", err);
+    }
   };
 
   const handleAddTask = async (taskData) => {
-    const newTask = { 
-      id: Date.now(), 
-      boardId: board.id, 
-      status: columns[0]?.label || 'To Do', 
-      ...taskData 
+    const newTask = {
+      id: Date.now(),
+      boardId: board.id,
+      status: columns[0]?.label || 'To Do',
+      ...taskData
     };
 
     dispatch({ type: 'ADD_TASK', payload: newTask });
@@ -147,14 +166,43 @@ export default function Board() {
     }
   };
 
-  const handleEditTask = (taskData) => {
+  const handleEditTask = async (taskData) => {
+    const backupId = editingTask.id;
     dispatch({ type: 'EDIT_TASK', payload: { ...editingTask, ...taskData } });
     setEditingTask(null);
+
+    try {
+      await fetch(`/api/tasks/${backupId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify(taskData)
+      });
+    } catch (err) {
+      console.error("Failed to update task on server", err);
+    }
   };
 
+  // Ask for confirmation before deleting a task
   const handleDeleteTask = (id) => {
+    setConfirmDeleteTaskId(id);
+  };
+
+  // Called when the user confirms deletion in the modal
+  const executeDeleteTask = async (id) => {
     dispatch({ type: 'DELETE_TASK', payload: id });
     setDetailTask(null);
+    setConfirmDeleteTaskId(null);
+    try {
+      await fetch(`/api/tasks/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+    } catch (err) {
+      console.error('Failed to delete task on server', err);
+    }
   };
 
   const handleDeleteBoard = () => {
@@ -163,12 +211,29 @@ export default function Board() {
   };
 
   // Columns and tags now go through the reducer — no stale closure risk
-  const handleSaveSettings = (newTitle, newMembers, newCols, newTags) => {
+  const handleSaveSettings = async (newTitle, newMembers, newCols, newTags) => {
     dispatch({ type: 'SET_COLUMNS', payload: newCols });
     dispatch({ type: 'SET_TAGS', payload: newTags });
     setBoards(prev => prev.map(b =>
       b.id === board.id ? { ...b, title: newTitle, members: newMembers, columns: newCols, tags: newTags } : b
     ));
+    try {
+      await fetch(`/api/boards/${board.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          title: newTitle,
+          members: newMembers,
+          columns: newCols,
+          tags: newTags
+        })
+      });
+    } catch (err) {
+      console.error("Failed to save board settings to database", err);
+    }
   };
 
   return (
@@ -193,8 +258,14 @@ export default function Board() {
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex -space-x-2">
                 {board.members.slice(0, 4).map(m => (
-                  <div key={m} className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-700 border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold" title={m}>
-                    {m.charAt(0).toUpperCase()}
+                  <div
+                    key={m}
+                    className={`w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold ${m === currentUser ? `bg-gradient-to-br ${userAvatar.gradient}` : 'bg-gradient-to-br from-brand-400 to-brand-700'}`}
+                    title={m}
+                  >
+                    {m === currentUser
+                      ? <span style={{ fontSize: userAvatar.emoji ? '0.85rem' : '0.7rem' }}>{userAvatar.emoji ?? m.charAt(0).toUpperCase()}</span>
+                      : m.charAt(0).toUpperCase()}
                   </div>
                 ))}
               </div>
@@ -290,6 +361,7 @@ export default function Board() {
       {detailTask && <TaskDetailModal task={detailTask} tagColorMap={tagColorMap} onClose={() => setDetailTask(null)} onEdit={(t) => { setDetailTask(null); setEditingTask(t); }} onDelete={handleDeleteTask} />}
       {settingsModal && <BoardSettingsModal title={board.title} members={board.members} columns={columns} tags={boardTags} onSave={handleSaveSettings} onClose={() => setSettingsModal(false)} />}
       {confirmDelete && <ConfirmModal title="Delete Board?" message={`Permanently delete "${board.title}"? This cannot be undone.`} confirmLabel="Delete Board" onConfirm={handleDeleteBoard} onClose={() => setConfirmDelete(false)} />}
+      {confirmDeleteTaskId && <ConfirmModal title="Delete Task?" message="This task will be permanently removed. This cannot be undone." confirmLabel="Delete Task" onConfirm={() => executeDeleteTask(confirmDeleteTaskId)} onClose={() => setConfirmDeleteTaskId(null)} />}
       {projectComplete && <ProjectCompleteModal board={board} onClose={() => setProjectComplete(false)} />}
     </div>
   );

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal';
+import ConfirmModal from './ConfirmModal';
 
 export default function TaskFormModal({ task, board, columns, onClose, onSave }) {
     const [title, setTitle] = useState(task?.title || '');
@@ -7,6 +8,7 @@ export default function TaskFormModal({ task, board, columns, onClose, onSave })
     const [assignee, setAssignee] = useState(task?.assignee || (board?.members?.[0] || ''));
     const [tags, setTags] = useState(task?.tags || []);
     const [formError, setFormError] = useState('');
+    const [confirmSave, setConfirmSave] = useState(false);
 
     const boardTagLabels = board?.tags?.map(t => t.label ?? t) || [];
 
@@ -26,8 +28,15 @@ export default function TaskFormModal({ task, board, columns, onClose, onSave })
                 setFormError('Due date cannot be in the past.');
                 return;
             }
+            onSave({ title: title.trim(), dueDate, assignee, tags: tags.length ? tags : ['General'] });
+        } else {
+            setConfirmSave(true);
         }
+    };
+
+    const executeSave = () => {
         onSave({ title: title.trim(), dueDate, assignee, tags: tags.length ? tags : ['General'] });
+        setConfirmSave(false);
     };
 
     const toggleTag = (tag) => {
@@ -105,6 +114,17 @@ export default function TaskFormModal({ task, board, columns, onClose, onSave })
                     </button>
                 </div>
             </form>
+
+            {confirmSave && (
+                <ConfirmModal
+                    title="Save Changes?"
+                    message="Are you sure you want to save these changes to the task?"
+                    confirmLabel="Save"
+                    variant="info"
+                    onConfirm={executeSave}
+                    onClose={() => setConfirmSave(false)}
+                />
+            )}
         </Modal>
     );
 }
