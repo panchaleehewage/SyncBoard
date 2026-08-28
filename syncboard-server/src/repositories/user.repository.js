@@ -1,44 +1,39 @@
-let users = [];
-let nextId = 1;
+import { User } from '../models/user.model.js';
+import AppError from '../utils/AppError.js';
 
 export const userRepository = {
   async findByEmail(email) {
-    return users.find(u => u.email === email);
+    return await User.findOne({ email });
   },
 
-  // Fix 1d: Login uses username on the frontend — add username lookup
   async findByUsername(username) {
-    return users.find(u => u.username === username);
+    return await User.findOne({ username });
   },
 
   async findById(id) {
-    return users.find(u => u.id === id);
+    return await User.findById(id);
   },
 
-  // Fix 1c: Ensure all profile fields are initialised at registration
   async create(userData) {
-    const newUser = {
-      bio: '',
-      avatar: null,
-      pendingInvites: [],
-      ...userData,
-      id: nextId++,
-    };
-    users.push(newUser);
-    return newUser;
+    try {
+      return await User.create(userData);
+    } catch (error) {
+      if (error.code === 11000) {
+        throw new AppError(409, 'Username or email already exists');
+      }
+      throw error;
+    }
   },
 
   async update(id, updates) {
-    const userIndex = users.findIndex(u => u.id === id);
-    if (userIndex === -1) return null;
-    users[userIndex] = { ...users[userIndex], ...updates };
-    return users[userIndex];
+    return await User.findByIdAndUpdate(id, updates, { new: true });
   },
 
   async searchByUsername(query, excludeId) {
     const q = (query || '').toLowerCase();
-    return users
-      .filter(u => u.id !== excludeId && u.username.toLowerCase().includes(q))
-      .map(({ password: _, ...u }) => u);
+    return await User.find({
+      _id: { $ne: excludeId },
+      username: { $regex: q, $options: 'i' } 
+    });
   }
 };

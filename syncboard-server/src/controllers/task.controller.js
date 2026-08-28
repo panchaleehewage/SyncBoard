@@ -1,5 +1,9 @@
 import { taskService } from '../services/task.service.js';
 import asyncHandler from '../utils/asyncHandler.js';
+import AppError from '../utils/AppError.js';
+import mongoose from 'mongoose';
+
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 export const taskController = {
   getAllTasks: asyncHandler(async (req, res) => {
@@ -8,6 +12,7 @@ export const taskController = {
   }),
 
   getTaskById: asyncHandler(async (req, res) => {
+    if (!isValidId(req.params.id)) throw new AppError(404, 'Task not found');
     const task = await taskService.getTaskById(req.params.id, req.user);
     res.status(200).json({ status: 'success', data: task });
   }),
@@ -18,11 +23,13 @@ export const taskController = {
   }),
 
   updateTask: asyncHandler(async (req, res) => {
+    if (!isValidId(req.params.id)) throw new AppError(404, 'Task not found');
     const updatedTask = await taskService.updateTask(req.params.id, req.body, req.user);
     res.status(200).json({ status: 'success', data: updatedTask });
   }),
 
   deleteTask: asyncHandler(async (req, res) => {
+    if (!isValidId(req.params.id)) throw new AppError(404, 'Task not found');
     await taskService.deleteTask(req.params.id, req.user);
     res.status(204).send();
   })
