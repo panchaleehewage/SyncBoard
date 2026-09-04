@@ -14,5 +14,14 @@ const boardSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
-// Ensure __v version key is managed properly (Mongoose does this by default)
+// Map _id → id and strip internal Mongoose fields from API responses
+boardSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
+  }
+});
+
 export const Board = mongoose.model('Board', boardSchema);

@@ -18,7 +18,7 @@ export default function Board() {
   const navigate = useNavigate();
   const { currentUser, authToken, boards, setBoards, userAvatar } = useApp();
 
-  const board = boards.find(b => b.id === parseInt(boardId));
+  const board = boards.find(b => b.id === boardId);
 
   // ── Single reducer manages tasks, columns, and tags ─────────────────────────
   const [boardState, dispatch] = useBoardReducer({
@@ -53,7 +53,7 @@ export default function Board() {
   useEffect(() => {
     getTasks(authToken)
       .then(all => {
-        dispatch({ type: 'SET_TASKS', payload: all.data.filter(t => t.boardId === parseInt(boardId)) });
+        dispatch({ type: 'SET_TASKS', payload: all.data.filter(t => t.boardId === boardId) });
         setLoading(false);
       })
       .catch(err => {
@@ -116,7 +116,7 @@ export default function Board() {
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    const movedId = parseInt(draggableId);
+    const movedId = draggableId; // string Mongo ID — no parseInt
     const newStatus = destination.droppableId;
     dispatch({ type: 'MOVE_TASK', payload: { id: movedId, newStatus } });
 
@@ -141,25 +141,23 @@ export default function Board() {
   };
 
   const handleAddTask = async (taskData) => {
-    const newTask = {
-      id: Date.now(),
-      boardId: board.id,
-      status: columns[0]?.label || 'To Do',
-      ...taskData
-    };
-
-    dispatch({ type: 'ADD_TASK', payload: newTask });
-    setTaskModal(false);
-
     try {
-      await fetch('/api/tasks', {
+      const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify(newTask)
+        body: JSON.stringify({
+          boardId: board.id,
+          status: columns[0]?.label || 'To Do',
+          ...taskData
+        })
       });
+      if (!res.ok) throw new Error('Server error creating task');
+      const { data: savedTask } = await res.json();
+      dispatch({ type: 'ADD_TASK', payload: savedTask });
+      setTaskModal(false);
     } catch (err) {
       console.error("Failed to save task to database", err);
       alert("Warning: Task was not saved to the server.");

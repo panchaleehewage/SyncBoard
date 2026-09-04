@@ -1,5 +1,4 @@
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
-import { mockBoards } from '../data/mockData';
 import { AVATAR_OPTIONS } from '../data/avatars';
 import { apiLogin, apiRegister, apiGetMe, apiUpdateMe } from '../api/auth.api';
 
@@ -18,7 +17,7 @@ export function AppProvider({ children }) {
     const [authLoading, setAuthLoading] = useState(!!localStorage.getItem(TOKEN_KEY)); // true while restoring session
 
     // ── Board / invite state ──────────────────────────────────────────────────
-    const [boards, setBoards] = useState(mockBoards);
+    const [boards, setBoards] = useState([]);
     const [pendingInvites, setPendingInvites] = useState([]);
     const [authModal, setAuthModal] = useState(null); // 'login' | 'signup' | null
 

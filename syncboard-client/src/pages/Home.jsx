@@ -518,7 +518,7 @@ export default function Home() {
                   'from-rose-500 to-pink-700',
                   'from-blue-500 to-indigo-700',
                 ];
-                const gradient = gradients[board.id % gradients.length];
+                const gradient = gradients[userBoards.indexOf(board) % gradients.length];
 
                 return (
                   <div
