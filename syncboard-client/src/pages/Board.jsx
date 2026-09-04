@@ -203,9 +203,19 @@ export default function Board() {
     }
   };
 
-  const handleDeleteBoard = () => {
-    setBoards(prev => prev.filter(b => b.id !== board.id));
-    navigate('/');
+  const handleDeleteBoard = async () => {
+    try {
+      const res = await fetch(`/api/boards/${board.id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error('Server error deleting board');
+      setBoards(prev => prev.filter(b => b.id !== board.id));
+      navigate('/');
+    } catch (err) {
+      console.error('Failed to delete board', err);
+      alert('Could not delete board. Please try again.');
+    }
   };
 
   // Columns and tags now go through the reducer — no stale closure risk

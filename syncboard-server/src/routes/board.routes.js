@@ -16,5 +16,6 @@ router.post('/', validate(createBoardSchema), boardController.createBoard);
 
 // Fix 2f: Validate PATCH body against the board schema whitelist
 router.patch('/:id', validate(updateBoardSchema), boardController.updateBoard);
+router.delete('/:id', boardController.deleteBoard);
 
 export default router;

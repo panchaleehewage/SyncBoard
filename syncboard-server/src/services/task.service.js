@@ -6,7 +6,7 @@ import AppError from '../utils/AppError.js';
 const enforceBoardAccess = async (boardId, username) => {
   const board = await boardRepository.findById(boardId);
   if (!board) throw new AppError(`No board found with ID ${boardId}`, 404);
-  
+
   if (!board.members.includes(username)) {
     throw new AppError('Forbidden: You do not have access to this board', 403);
   }
@@ -15,7 +15,7 @@ const enforceBoardAccess = async (boardId, username) => {
 export const taskService = {
   async getTasks(query = {}, currentUser) {
     let tasks = await taskRepository.findAll();
-    
+
     // AUTHORIZATION: Only return tasks for boards this user is a member of
     const userBoards = await boardRepository.findAllByMember(currentUser.username);
     const userBoardIds = userBoards.map(b => b.id);
@@ -28,16 +28,20 @@ export const taskService = {
     // 2. Sorting
     if (query.sort) tasks.sort((a, b) => (a[query.sort] > b[query.sort] ? 1 : -1));
 
-    // 3. Pagination
-    const page = parseInt(query.page) || 1;
-    const limit = parseInt(query.limit) || 10;
-    return tasks.slice((page - 1) * limit, page * limit);
+    // 3. Pagination (only applied when client explicitly requests it)
+    if (query.page || query.limit) {
+      const page = parseInt(query.page) || 1;
+      const limit = parseInt(query.limit) || 20;
+      return tasks.slice((page - 1) * limit, page * limit);
+    }
+
+    return tasks;
   },
 
   async getTaskById(id, currentUser) {
     const task = await taskRepository.findById(id);
     if (!task) throw new AppError(`No task found with ID ${id}`, 404);
-    
+
     await enforceBoardAccess(task.boardId, currentUser.username);
     return task;
   },
@@ -50,7 +54,7 @@ export const taskService = {
   async updateTask(id, updates, currentUser) {
     const task = await taskRepository.findById(id);
     if (!task) throw new AppError(`No task found with ID ${id}`, 404);
-    
+
     await enforceBoardAccess(task.boardId, currentUser.username);
     return await taskRepository.update(id, updates);
   },
@@ -58,7 +62,7 @@ export const taskService = {
   async deleteTask(id, currentUser) {
     const task = await taskRepository.findById(id);
     if (!task) throw new AppError(`No task found with ID ${id}`, 404);
-    
+
     await enforceBoardAccess(task.boardId, currentUser.username);
     return await taskRepository.delete(id);
   }

@@ -2,7 +2,7 @@ import { Board } from '../models/board.model.js';
 
 export const boardRepository = {
   async findAll() {
-    return await Board.find(); 
+    return await Board.find();
   },
 
   async findById(id) {
@@ -19,5 +19,10 @@ export const boardRepository = {
 
   async update(id, updates) {
     return await Board.findByIdAndUpdate(id, updates, { new: true });
+  },
+
+  async delete(id) {
+    const result = await Board.findByIdAndDelete(id);
+    return !!result;
   }
 };

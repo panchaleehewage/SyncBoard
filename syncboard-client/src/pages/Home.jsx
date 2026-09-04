@@ -281,9 +281,19 @@ export default function Home() {
     }
   };
 
-  const handleDeleteBoard = (boardId) => {
-    setBoards(prev => prev.filter(b => b.id !== boardId));
-    setConfirmDeleteId(null);
+  const handleDeleteBoard = async (boardId) => {
+    try {
+      const res = await fetch(`/api/boards/${boardId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error('Server error deleting board');
+      setBoards(prev => prev.filter(b => b.id !== boardId));
+      setConfirmDeleteId(null);
+    } catch (err) {
+      console.error('Failed to delete board', err);
+      alert('Could not delete board. Please try again.');
+    }
   };
 
   // ── Landing (not logged in) ──────────────────────────────────────────────────
