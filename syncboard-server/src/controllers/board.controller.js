@@ -12,13 +12,13 @@ export const boardController = {
   }),
 
   getBoardById: asyncHandler(async (req, res) => {
-    if (!isValidId(req.params.id)) throw new AppError(404, `No board found with ID ${req.params.id}`);
+    if (!isValidId(req.params.id)) throw new AppError(`No board found with ID ${req.params.id}`, 404);
 
     const board = await boardRepository.findById(req.params.id);
-    if (!board) throw new AppError(404, `No board found with ID ${req.params.id}`);
+    if (!board) throw new AppError(`No board found with ID ${req.params.id}`, 404);
 
     if (!board.members.includes(req.user.username)) {
-      throw new AppError(403, 'Forbidden: You are not a member of this board');
+      throw new AppError('Forbidden: You are not a member of this board', 403);
     }
     res.status(200).json({ status: 'success', data: board });
   }),
@@ -32,26 +32,26 @@ export const boardController = {
   }),
 
   updateBoard: asyncHandler(async (req, res) => {
-    if (!isValidId(req.params.id)) throw new AppError(404, `No board found with ID ${req.params.id}`);
+    if (!isValidId(req.params.id)) throw new AppError(`No board found with ID ${req.params.id}`, 404);
 
     const board = await boardRepository.findById(req.params.id);
-    if (!board) throw new AppError(404, `No board found with ID ${req.params.id}`);
+    if (!board) throw new AppError(`No board found with ID ${req.params.id}`, 404);
 
     if (!board.members.includes(req.user.username)) {
-      throw new AppError(403, 'Forbidden: You are not a member of this board');
+      throw new AppError('Forbidden: You are not a member of this board', 403);
     }
     const updatedBoard = await boardRepository.update(req.params.id, req.body);
     res.status(200).json({ status: 'success', data: updatedBoard });
   }),
 
   deleteBoard: asyncHandler(async (req, res) => {
-    if (!isValidId(req.params.id)) throw new AppError(404, `No board found with ID ${req.params.id}`);
+    if (!isValidId(req.params.id)) throw new AppError(`No board found with ID ${req.params.id}`, 404);
 
     const board = await boardRepository.findById(req.params.id);
-    if (!board) throw new AppError(404, `No board found with ID ${req.params.id}`);
+    if (!board) throw new AppError(`No board found with ID ${req.params.id}`, 404);
 
     if (board.leader !== req.user.username) {
-      throw new AppError(403, 'Forbidden: Only the board leader can delete this board');
+      throw new AppError('Forbidden: Only the board leader can delete this board', 403);
     }
     await boardRepository.delete(req.params.id);
     res.status(204).send();
