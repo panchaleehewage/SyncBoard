@@ -9,7 +9,6 @@ const taskSchema = new mongoose.Schema({
   status: { type: String, required: true },
 }, { timestamps: true });
 
-// Map _id → id and boardId ObjectId → string for clean API responses
 taskSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret._id.toString();
