@@ -12,7 +12,7 @@ export const taskController = {
   }),
 
   getTaskById: asyncHandler(async (req, res) => {
-    if (!isValidId(req.params.id)) throw new AppError(404, 'Task not found');
+    if (!isValidId(req.params.id)) throw new AppError('Task not found', 404);
     const task = await taskService.getTaskById(req.params.id, req.user);
     res.status(200).json({ status: 'success', data: task });
   }),
@@ -23,13 +23,13 @@ export const taskController = {
   }),
 
   updateTask: asyncHandler(async (req, res) => {
-    if (!isValidId(req.params.id)) throw new AppError(404, 'Task not found');
+    if (!isValidId(req.params.id)) throw new AppError('Task not found', 404);
     const updatedTask = await taskService.updateTask(req.params.id, req.body, req.user);
     res.status(200).json({ status: 'success', data: updatedTask });
   }),
 
   deleteTask: asyncHandler(async (req, res) => {
-    if (!isValidId(req.params.id)) throw new AppError(404, 'Task not found');
+    if (!isValidId(req.params.id)) throw new AppError('Task not found', 404);
     await taskService.deleteTask(req.params.id, req.user);
     res.status(204).send();
   })

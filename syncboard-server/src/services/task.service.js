@@ -2,7 +2,6 @@ import { taskRepository } from '../repositories/task.repository.js';
 import { boardRepository } from '../repositories/board.repository.js';
 import AppError from '../utils/AppError.js';
 
-// Helper function to enforce authorization rules
 const enforceBoardAccess = async (boardId, username) => {
   const board = await boardRepository.findById(boardId);
   if (!board) throw new AppError(`No board found with ID ${boardId}`, 404);
@@ -16,19 +15,15 @@ export const taskService = {
   async getTasks(query = {}, currentUser) {
     let tasks = await taskRepository.findAll();
 
-    // AUTHORIZATION: Only return tasks for boards this user is a member of
     const userBoards = await boardRepository.findAllByMember(currentUser.username);
     const userBoardIds = userBoards.map(b => b._id.toString());
     tasks = tasks.filter(t => userBoardIds.includes(t.boardId.toString()));
 
-    // 1. Filtering
     if (query.status) tasks = tasks.filter(t => t.status.toLowerCase() === query.status.toLowerCase());
     if (query.assignee) tasks = tasks.filter(t => t.assignee.toLowerCase() === query.assignee.toLowerCase());
 
-    // 2. Sorting
     if (query.sort) tasks.sort((a, b) => (a[query.sort] > b[query.sort] ? 1 : -1));
 
-    // 3. Pagination (only applied when client explicitly requests it)
     if (query.page || query.limit) {
       const page = parseInt(query.page) || 1;
       const limit = parseInt(query.limit) || 20;

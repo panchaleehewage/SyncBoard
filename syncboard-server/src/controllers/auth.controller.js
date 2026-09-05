@@ -26,7 +26,7 @@ export const authController = {
     if (username && username !== req.user.username) {
       const existing = await userRepository.findByUsername(username);
       if (existing && existing._id.toString() !== req.user.id) {
-        throw new AppError(409, 'Username already taken');
+        throw new AppError('Username already taken', 409);
       }
     }
 
