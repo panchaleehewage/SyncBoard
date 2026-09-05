@@ -57,7 +57,13 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
 
             <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-3">
               <Calendar size={12} />
-              <span>Due {task.dueDate}</span>
+              <span>
+                Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { 
+                  month: 'short', 
+                  day: 'numeric', 
+                  year: 'numeric' 
+                }) : 'No due date'}
+              </span>
             </div>
 
             <div className="flex flex-wrap gap-1">

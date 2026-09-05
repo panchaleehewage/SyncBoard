@@ -18,8 +18,8 @@ export const taskService = {
 
     // AUTHORIZATION: Only return tasks for boards this user is a member of
     const userBoards = await boardRepository.findAllByMember(currentUser.username);
-    const userBoardIds = userBoards.map(b => b.id);
-    tasks = tasks.filter(t => userBoardIds.includes(t.boardId));
+    const userBoardIds = userBoards.map(b => b._id.toString());
+    tasks = tasks.filter(t => userBoardIds.includes(t.boardId.toString()));
 
     // 1. Filtering
     if (query.status) tasks = tasks.filter(t => t.status.toLowerCase() === query.status.toLowerCase());

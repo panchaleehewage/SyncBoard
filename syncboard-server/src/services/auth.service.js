@@ -30,10 +30,11 @@ export const authService = {
       username,
     });
 
-    const { password: _, ...userWithoutPassword } = newUser;
-    const token = signToken(newUser.id);
+    // Convert to plain object via toJSON (removes _id/__v/password via User model transform)
+    const safeUser = newUser.toJSON();
+    const token = signToken(safeUser.id);
 
-    return { user: userWithoutPassword, token };
+    return { user: safeUser, token };
   },
 
   // Fix 1d: Accept username (not email) to match the frontend AuthModal login form
@@ -44,9 +45,10 @@ export const authService = {
       throw new AppError('Incorrect username or password', 401);
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    const token = signToken(user.id);
+    // Convert to plain object via toJSON (removes _id/__v/password via User model transform)
+    const safeUser = user.toJSON();
+    const token = signToken(safeUser.id);
 
-    return { user: userWithoutPassword, token };
+    return { user: safeUser, token };
   }
 };

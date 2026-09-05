@@ -13,7 +13,7 @@ export const authController = {
   login: asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     const result = await authService.login(username, password);
-    res.status(200).json({ status: 'success', data: result });
+    res.status(200).json({ status: 'success', data: { user: result.user, token: result.token } });
   }),
 
   getMe: (req, res) => {

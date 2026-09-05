@@ -118,7 +118,7 @@ export default function AuthModal() {
                 <button
                     type="button"
                     disabled={loading}
-                    onClick={() => setError('Google sign-in coming soon.')}
+                    onClick={() => alert('Google Authentication coming soon!')}
                     className="w-full py-2.5 px-4 flex items-center justify-center gap-3 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 disabled:opacity-60 rounded-lg transition-colors text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
                     <Globe2 size={18} className="text-brand-500" />

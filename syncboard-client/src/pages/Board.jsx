@@ -51,15 +51,20 @@ export default function Board() {
   const tagColorMap = Object.fromEntries(boardTags.map(t => [t.label, t.color]));
 
   useEffect(() => {
-    getTasks(authToken)
-      .then(all => {
-        dispatch({ type: 'SET_TASKS', payload: all.data.filter(t => t.boardId === boardId) });
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error('Failed to load tasks', err);
-        setLoading(false);
+    if (!authToken) return;
+    
+    getTasks(authToken).then(response => {
+      const tasksArray = Array.isArray(response) ? response : (response.data || []);
+      
+      dispatch({ 
+        type: 'SET_TASKS', 
+        payload: tasksArray.filter(t => String(t.boardId) === String(boardId)) 
       });
+      setLoading(false);
+    }).catch(err => {
+      console.error(err);
+      setLoading(false);
+    });
   }, [boardId, authToken]);
 
   // ── Board not found ─────────────────────────────────────────────────────────

@@ -39,7 +39,13 @@ export default function TaskDetailModal({ task, tagColorMap, onClose, onEdit, on
                     </div>
                     <div className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
                         <Calendar size={15} className="text-slate-400 flex-shrink-0" />
-                        <span><span className="font-medium text-slate-800 dark:text-slate-200">Due Date:</span> {task.dueDate}</span>
+                        <span>
+                            <span className="font-medium text-slate-800 dark:text-slate-200">Due Date:</span> {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { 
+                                month: 'short', 
+                                day: 'numeric', 
+                                year: 'numeric' 
+                            }) : 'No due date'}
+                        </span>
                     </div>
                     {task.tags?.length > 0 && (
                         <div className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
