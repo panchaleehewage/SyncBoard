@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeAll, afterEach, afterAll, vi } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import { AppContext } from '../../src/context/AppContext';
 import AuthModal from '../../src/components/AuthModal'; 
 
 const MOCK_TOKEN = 'fake.jwt.token';
@@ -37,7 +38,11 @@ describe('Login Form Submission', () => {
       })
     );
 
-    render(<AuthModal onLogin={onLoginSuccess} />);
+    render(
+      <AppContext.Provider value={{ authModal: 'login', setAuthModal: vi.fn(), login: vi.fn(), register: vi.fn() }}>
+        <AuthModal onLogin={onLoginSuccess}/>
+      </AppContext.Provider>
+    );
 
     await user.type(screen.getByLabelText(/username/i), 'StudentDev');
     await user.type(screen.getByLabelText(/password/i), 'password123');

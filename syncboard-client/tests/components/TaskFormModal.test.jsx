@@ -14,7 +14,7 @@ describe('TaskFormModal', () => {
     const user = userEvent.setup();
     render(<TaskFormModal {...defaultProps} />);
 
-    const titleInput = screen.getByLabelText(/Task Title/i);
+    const titleInput = screen.getByPlaceholderText(/What needs to be done/i);
     await user.type(titleInput, 'Hi');
 
     await user.click(screen.getByRole('button', { name: /Add Task/i }));

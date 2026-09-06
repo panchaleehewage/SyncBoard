@@ -1,6 +1,14 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { vi, describe, it, expect } from 'vitest';
 import TaskCard from '../../src/components/TaskCard';
+
+vi.mock('@hello-pangea/dnd', () => ({
+  Draggable: ({ children }) => children({
+    draggableProps: {},
+    dragHandleProps: {},
+    innerRef: vi.fn()
+  }, { isDragging: false })
+}));
 
 describe('TaskCard', () => {
   const mockTask = {
