@@ -5,7 +5,6 @@ import Modal from './Modal';
 export default function TaskDetailModal({ task, tagColorMap, onClose, onEdit, onDelete }) {
     if (!task) return null;
 
-    // Use a minimal overdue check: past due and not in "Done" status
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const isOverdue = task.dueDate && new Date(task.dueDate) < today && task.status !== 'Done';

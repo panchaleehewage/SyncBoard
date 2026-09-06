@@ -6,7 +6,6 @@ import { apiSearchUsers } from '../api/users.api';
 import { useApp } from '../context/AppContext';
 import ConfirmModal from './ConfirmModal';
 
-// ─── Colour swatch picker ──────────────────────────────────────────────────────
 function SwatchPicker({ selected, onSelect }) {
     return (
         <div className="flex flex-wrap gap-2 mt-3">
@@ -23,7 +22,6 @@ function SwatchPicker({ selected, onSelect }) {
     );
 }
 
-// ─── Single editable item row ──────────────────────────────────────────────────
 function ItemRow({ item, onChange, onRemove }) {
     const [open, setOpen] = useState(false);
     return (
@@ -54,15 +52,13 @@ function ItemRow({ item, onChange, onRemove }) {
     );
 }
 
-// ─── Tab panel for columns or tags ────────────────────────────────────────────
-// Input text and color are lifted to the parent so they survive tab switches.
 function ItemsPanel({ items, setItems, placeholder, defaultColorKey, newLabel, setNewLabel, newColor, setNewColor }) {
     const addItem = () => {
         if (!newLabel.trim()) return;
         const colorToUse = newColor ?? defaultColorKey;
         setItems(prev => [...prev, { label: newLabel.trim(), color: colorToUse }]);
         setNewLabel('');
-        setNewColor(null); // clear — user must re-pick for next item
+        setNewColor(null);
     };
 
     return (
@@ -103,7 +99,6 @@ function ItemsPanel({ items, setItems, placeholder, defaultColorKey, newLabel, s
     );
 }
 
-// ─── Main BoardSettingsModal ───────────────────────────────────────────────────
 export default function BoardSettingsModal({ title, members = [], columns, tags, onSave, onClose }) {
     const { authToken, currentUser } = useApp();
     const [localTitle, setLocalTitle] = useState(title || '');
@@ -114,9 +109,9 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
     const [confirmSave, setConfirmSave] = useState(false);
 
     const [colNewLabel, setColNewLabel] = useState('');
-    const [colNewColor, setColNewColor] = useState(null); // null = no pre-selection
+    const [colNewColor, setColNewColor] = useState(null);
     const [tagNewLabel, setTagNewLabel] = useState('');
-    const [tagNewColor, setTagNewColor] = useState(null); // null = no pre-selection
+    const [tagNewColor, setTagNewColor] = useState(null);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);

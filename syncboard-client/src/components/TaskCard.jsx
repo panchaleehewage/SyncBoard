@@ -9,7 +9,6 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
 
   const isOverdue = new Date(task.dueDate) < new Date() && columnIndex !== totalColumns - 1;
 
-  // Use bg colour for the accent strip (avoids border-color shorthand override in dark mode)
   const stripColor = isOverdue ? 'bg-red-500' : getBgClass(columnColor);
 
   return (
@@ -29,10 +28,8 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
               ${snapshot.isDragging ? 'shadow-xl rotate-1 scale-[1.02] opacity-90' : ''}
             `}
           >
-            {/* Left colour accent strip — always visible in both light and dark mode */}
             <div className={`absolute left-0 inset-y-0 w-[4px] ${stripColor} transition-colors duration-200`} />
 
-            {/* Delete X */}
             <button
               onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
               className="absolute top-2.5 right-2.5 p-1 rounded-md text-slate-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all duration-150"
