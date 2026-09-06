@@ -20,8 +20,8 @@ export default function AuthModal() {
         setError('');
         setLoading(true);
 
-        const username = e.target.username.value.trim();
-        const password = e.target.password.value;
+        const username = e.target.elements.username.value.trim();
+        const password = e.target.elements.password.value;
 
         try {
             if (isLogin) {
