@@ -117,10 +117,8 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
     const [searchResults, setSearchResults] = useState([]);
 
     useEffect(() => {
-        if (searchQuery.trim().length < 2) {
-            setSearchResults([]);
-            return;
-        }
+        if (searchQuery.trim().length < 2) return;
+        
         const delayDebounceFn = setTimeout(async () => {
             try {
                 const results = await apiSearchUsers(searchQuery, authToken);
@@ -220,7 +218,10 @@ export default function BoardSettingsModal({ title, members = [], columns, tags,
                             <input
                                 type="text"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    if (e.target.value.trim().length < 2) setSearchResults([]);
+                                }}
                                 placeholder="Search by username..."
                                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 text-sm"
                             />

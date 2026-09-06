@@ -20,7 +20,6 @@ export default function Board() {
 
   const board = boards.find(b => b.id === boardId);
 
-  // ── Single reducer manages tasks, columns, and tags ─────────────────────────
   const [boardState, dispatch] = useBoardReducer({
     tasks: [],
     columns: board?.columns || [
@@ -47,7 +46,6 @@ export default function Board() {
 
   const isLeader = currentUser === board?.leader;
 
-  // Tag color map: { "Frontend": "blue", "Backend": "violet", ... }
   const tagColorMap = Object.fromEntries(boardTags.map(t => [t.label, t.color]));
 
   useEffect(() => {
@@ -67,7 +65,6 @@ export default function Board() {
     });
   }, [boardId, authToken]);
 
-  // ── Board not found ─────────────────────────────────────────────────────────
   if (!board) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
@@ -79,7 +76,6 @@ export default function Board() {
     );
   }
 
-  // ── Board membership check (403) ────────────────────────────────────────────
   if (!board.members.includes(currentUser)) {
     return (
       <div className="min-h-[calc(100vh-64px)] flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-4">
@@ -99,12 +95,10 @@ export default function Board() {
     );
   }
 
-  // Progress
   const doneLabel = columns[columns.length - 1]?.label;
   const doneCount = tasks.filter(t => t.status === doneLabel).length;
   const progress = tasks.length > 0 ? Math.round((doneCount / tasks.length) * 100) : 0;
 
-  // Filtered tasks
   const today = new Date();
   const filteredTasks = tasks.filter(t => {
     if (searchQuery && !t.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -115,17 +109,15 @@ export default function Board() {
     return true;
   });
 
-  // ── Drag end with project completion check ──────────────────────────────────
   const handleDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    const movedId = draggableId; // string Mongo ID — no parseInt
+    const movedId = draggableId;
     const newStatus = destination.droppableId;
     dispatch({ type: 'MOVE_TASK', payload: { id: movedId, newStatus } });
 
-    // Simulate the updated state (tasks hasn't re-rendered yet)
     const simulatedTasks = tasks.map(t => t.id === movedId ? { ...t, status: newStatus } : t);
     if (doneLabel && simulatedTasks.length > 0 && simulatedTasks.every(t => t.status === doneLabel)) {
       setProjectComplete(true);
@@ -188,12 +180,10 @@ export default function Board() {
     }
   };
 
-  // Ask for confirmation before deleting a task
   const handleDeleteTask = (id) => {
     setConfirmDeleteTaskId(id);
   };
 
-  // Called when the user confirms deletion in the modal
   const executeDeleteTask = async (id) => {
     dispatch({ type: 'DELETE_TASK', payload: id });
     setDetailTask(null);
@@ -223,7 +213,6 @@ export default function Board() {
     }
   };
 
-  // Columns and tags now go through the reducer — no stale closure risk
   const handleSaveSettings = async (newTitle, newMembers, newCols, newTags) => {
     dispatch({ type: 'SET_COLUMNS', payload: newCols });
     dispatch({ type: 'SET_TAGS', payload: newTags });

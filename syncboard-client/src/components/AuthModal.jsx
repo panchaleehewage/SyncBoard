@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Globe2, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Modal from './Modal';
@@ -10,8 +10,13 @@ export default function AuthModal() {
     const [showPassword, setShowPassword] = useState(false);
 
     const isLogin = authModal === 'login';
+    const [prevIsLogin, setPrevIsLogin] = useState(isLogin);
 
-    useEffect(() => { setError(''); setShowPassword(false); }, [isLogin]);
+    if (isLogin !== prevIsLogin) {
+        setPrevIsLogin(isLogin);
+        setError('');
+        setShowPassword(false);
+    }
 
     if (!authModal) return null;
 

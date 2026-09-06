@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { AVATAR_OPTIONS } from '../data/avatars';
 import { apiLogin, apiRegister, apiGetMe, apiUpdateMe } from '../api/auth.api';
@@ -41,7 +42,7 @@ export function AppProvider({ children }) {
 
     useEffect(() => {
         const token = localStorage.getItem(TOKEN_KEY);
-        if (!token) { setAuthLoading(false); return; }
+        if (!token) return;
 
         apiGetMe(token)
             .then(({ user }) => hydrateUser(user, token))
@@ -49,7 +50,7 @@ export function AppProvider({ children }) {
                 clearUser();
             })
             .finally(() => setAuthLoading(false));
-    }, []);
+    },);
 
     useEffect(() => {
         if (!authToken) return;
@@ -92,10 +93,6 @@ export function AppProvider({ children }) {
         }
         return user;
     }, []);
-
-    useEffect(() => {
-        if (!currentUser) { setPendingInvites([]); }
-    }, [currentUser]);
 
     return (
         <AppContext.Provider value={{

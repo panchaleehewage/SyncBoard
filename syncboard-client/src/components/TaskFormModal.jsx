@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Modal from './Modal';
 import ConfirmModal from './ConfirmModal';
 
-export default function TaskFormModal({ task, board, columns, onClose, onSave }) {
+export default function TaskFormModal({ task, board, onClose, onSave }) {
     const [title, setTitle] = useState(task?.title || '');
     const [dueDate, setDueDate] = useState(task?.dueDate || '');
     const [assignee, setAssignee] = useState(task?.assignee || (board?.members?.[0] || ''));

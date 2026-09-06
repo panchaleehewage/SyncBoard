@@ -1,10 +1,7 @@
 import { useReducer } from 'react';
 
-// ─── Board Reducer ─────────────────────────────────────────────────────────────
-// State shape: { tasks: [], columns: [], tags: [] }
 function boardReducer(state, action) {
   switch (action.type) {
-    // ── Task actions ───────────────────────────────────────────────────────────
     case 'SET_TASKS':
       return { ...state, tasks: action.payload };
     case 'ADD_TASK':
@@ -31,7 +28,6 @@ function boardReducer(state, action) {
         ),
       };
 
-    // ── Column actions ─────────────────────────────────────────────────────────
     case 'SET_COLUMNS':
       return { ...state, columns: action.payload };
     case 'ADD_COLUMN':
@@ -44,7 +40,6 @@ function boardReducer(state, action) {
         columns: state.columns.map((c, i) => (i === action.payload.index ? action.payload.column : c)),
       };
 
-    // ── Tag actions ────────────────────────────────────────────────────────────
     case 'SET_TAGS':
       return { ...state, tags: action.payload };
     case 'ADD_TAG':
@@ -76,7 +71,6 @@ export function useBoardReducer(initialState) {
   });
 }
 
-// ─── Backward-compat alias (tasks-only flat array) ─────────────────────────────
 function taskReducer(state, action) {
   switch (action.type) {
     case 'SET_TASKS': return action.payload;

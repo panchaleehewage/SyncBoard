@@ -1,5 +1,3 @@
-// All Tailwind class strings must appear as complete literals for JIT purge to include them.
-
 export const COLOR_OPTIONS = [
     {
         key: 'violet',
@@ -75,23 +73,19 @@ export const COLOR_OPTIONS = [
     },
 ];
 
-/** Get the full border-left Tailwind class for a color key (falls back to violet). */
 export function getBorderClass(colorKey) {
     return COLOR_OPTIONS.find(c => c.key === colorKey)?.border ?? 'border-l-violet-500';
 }
 
-/** Get the bg dot class for column headers. */
 export function getBgClass(colorKey) {
     return COLOR_OPTIONS.find(c => c.key === colorKey)?.bg ?? 'bg-violet-500';
 }
 
-/** Get tag pill classes (light + dark combined). */
 export function getTagClasses(colorKey) {
     const opt = COLOR_OPTIONS.find(c => c.key === colorKey);
     if (!opt) return 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-300';
     return `${opt.tagLight} ${opt.tagDark}`;
 }
 
-/** Default ordered colors for brand-new boards (cycles through). */
 export const DEFAULT_COL_COLORS = ['violet', 'amber', 'emerald', 'blue'];
 export const DEFAULT_TAG_COLORS = ['blue', 'teal', 'rose', 'cyan', 'orange', 'violet', 'emerald', 'amber'];

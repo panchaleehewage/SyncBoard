@@ -27,8 +27,6 @@ export const mockUsers = [
   }
 ];
 
-// Columns and tags are now { label: string, color: string } objects.
-// Task.tags remains string[] (label only). Task.status remains a string (column label).
 export const mockBoards = [
   {
     id: 1,
@@ -67,7 +65,6 @@ export const mockBoards = [
     ],
   },
   {
-    // Board from pending invite — Alice started it, StudentDev hasn't joined yet
     id: 99,
     title: "Design System 2027",
     leader: "Alice",

@@ -1,5 +1,3 @@
-// Shared avatar option definitions used by Profile.jsx, AppContext, and Navbar.
-// All gradient strings are written as full Tailwind literals for JIT safety.
 export const AVATAR_OPTIONS = [
     { id: 'default', gradient: 'from-brand-500 to-brand-700', emoji: null, label: 'Indigo' },
     { id: 'rose', gradient: 'from-rose-500 to-pink-700', emoji: '🌸', label: 'Rose' },

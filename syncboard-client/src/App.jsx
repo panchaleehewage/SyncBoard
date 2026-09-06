@@ -12,8 +12,6 @@ import './App.css';
 export default function App() {
   const { authLoading } = useApp();
 
-  // While restoring session from localStorage (GET /api/auth/me in-flight),
-  // show a neutral splash so the user never sees a logged-out flash.
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
