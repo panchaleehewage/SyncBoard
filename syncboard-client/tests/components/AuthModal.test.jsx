@@ -44,8 +44,8 @@ describe('Login Form Submission', () => {
       </AppContext.Provider>
     );
 
-    await user.type(screen.getByLabelText(/username/i), 'StudentDev');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.type(screen.getByPlaceholderText(/Your username/i), 'StudentDev');
+    await user.type(screen.getByPlaceholderText(/••••••••/i), 'password123');
     await user.click(screen.getByRole('button', { name: /login|sign in/i }));
 
     await waitFor(() => {

@@ -17,7 +17,7 @@ describe('TaskCard', () => {
     assignee: 'StudentDev',
     dueDate: '2026-09-18T00:00:00.000Z',
     status: 'To Do',
-    tags: [{ label: 'Urgent', color: 'red' }]
+    tags: ['Urgent']
   };
 
   it('renders task details correctly', () => {
