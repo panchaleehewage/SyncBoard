@@ -11,7 +11,6 @@ export default function AuthModal() {
 
     const isLogin = authModal === 'login';
 
-    // Clear error & reset password visibility whenever user switches between Login ↔ Sign Up views
     useEffect(() => { setError(''); setShowPassword(false); }, [isLogin]);
 
     if (!authModal) return null;
@@ -32,7 +31,6 @@ export default function AuthModal() {
                 if (!email) { setError('Email is required.'); setLoading(false); return; }
                 await register(username, email, password);
             }
-            // On success AppContext closes the modal via setAuthModal(null)
         } catch (err) {
             setError(err.message || 'Something went wrong. Please try again.');
         } finally {
