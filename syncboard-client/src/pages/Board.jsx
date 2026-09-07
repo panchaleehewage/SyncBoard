@@ -63,7 +63,7 @@ export default function Board() {
       console.error(err);
       setLoading(false);
     });
-  }, [boardId, authToken]);
+  }, [boardId, authToken, dispatch]);
 
   if (!board) {
     return (

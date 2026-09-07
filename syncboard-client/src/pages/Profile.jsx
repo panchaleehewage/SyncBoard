@@ -19,18 +19,14 @@ export default function Profile() {
     const [bio, setBio] = useState(profileData?.bio || '');
     const [saved, setSaved] = useState(false);
 
-    // Avatar state — initialised from global context so Navbar stays in sync
     const [chosenAvatar, setChosenAvatar] = useState(() => userAvatar ?? AVATAR_OPTIONS[0]);
     const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
-    // Fetch real tasks for the upcoming tasks section (only possible for own profile)
     const [realTasks, setRealTasks] = useState([]);
-    const [tasksLoading, setTasksLoading] = useState(true);
+    const [tasksLoading, setTasksLoading] = useState(isOwnProfile && !!authToken);
     useEffect(() => {
-        if (!isOwnProfile || !authToken) {
-            setTasksLoading(false);
-            return;
-        }
+        if (!isOwnProfile || !authToken) return;
+        
         getTasks(authToken)
             .then(res => { setRealTasks(res.data); setTasksLoading(false); })
             .catch(err => { console.error('Failed to fetch tasks for profile', err); setTasksLoading(false); });
@@ -58,7 +54,6 @@ export default function Profile() {
     };
 
     const handleCancelEdit = () => {
-        // Reset local avatar to what's currently saved in global context
         setChosenAvatar(userAvatar ?? AVATAR_OPTIONS[0]);
         setAvatarPickerOpen(false);
         setEditing(false);

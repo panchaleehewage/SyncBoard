@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { mockUsers } from '../data/mockData';
 import { apiSearchUsers } from '../api/users.api';
 import { useEffect } from 'react';
 import { COLOR_OPTIONS, DEFAULT_COL_COLORS, DEFAULT_TAG_COLORS, getTagClasses, getBgClass } from '../data/colors';
@@ -12,7 +11,6 @@ import {
   Zap, X, Search, ChevronRight
 } from 'lucide-react';
 
-// ─── Colour picker swatch used inside create-board modal ───────────────────────
 function SwatchPicker({ selected, onSelect }) {
   return (
     <div className="flex flex-wrap gap-2 mt-3">
@@ -29,7 +27,6 @@ function SwatchPicker({ selected, onSelect }) {
   );
 }
 
-// ─── Granular item builder (columns / tags) ────────────────────────────────────
 function ItemBuilder({ items, setItems, placeholder, defaultColors, label }) {
   const [inputVal, setInputVal] = useState('');
   const [inputColor, setInputColor] = useState(null);
@@ -39,7 +36,7 @@ function ItemBuilder({ items, setItems, placeholder, defaultColors, label }) {
     const colorToUse = inputColor ?? defaultColors[0];
     const newItems = [...items, { label: inputVal.trim(), color: colorToUse }];
     setItems(newItems);
-    setInputColor(null); // clear selection — user must explicitly pick for the next item
+    setInputColor(null);
     setInputVal('');
   };
 
@@ -94,7 +91,6 @@ function ItemBuilder({ items, setItems, placeholder, defaultColors, label }) {
   );
 }
 
-// ─── Create Board Modal ────────────────────────────────────────────────────────
 function CreateBoardModal({ onClose, onCreate }) {
   const { currentUser, authToken } = useApp();
   const [title, setTitle] = useState('');
@@ -110,10 +106,8 @@ function CreateBoardModal({ onClose, onCreate }) {
   const [formError, setFormError] = useState('');
 
   useEffect(() => {
-    if (memberInput.trim().length < 2) {
-      setMemberSuggestions([]);
-      return;
-    }
+    if (memberInput.trim().length < 2) return;
+    
     const delayDebounceFn = setTimeout(async () => {
       try {
         const results = await apiSearchUsers(memberInput, authToken);
@@ -127,6 +121,7 @@ function CreateBoardModal({ onClose, onCreate }) {
 
   const handleMemberSearch = (val) => {
     setMemberInput(val);
+    if (val.trim().length < 2) setMemberSuggestions([]);
   };
 
   const addMember = (username) => {
@@ -232,7 +227,6 @@ function CreateBoardModal({ onClose, onCreate }) {
   );
 }
 
-// ─── Main Home Component ───────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
   const { currentUser, authToken, boards, setBoards, pendingInvites, setPendingInvites, setAuthModal, userAvatar } = useApp();
@@ -296,7 +290,6 @@ export default function Home() {
     }
   };
 
-  // ── Landing (not logged in) ──────────────────────────────────────────────────
   if (!currentUser) {
     return (
       <div className="bg-white dark:bg-slate-950 transition-colors duration-300">
