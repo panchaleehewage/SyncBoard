@@ -107,7 +107,7 @@ function CreateBoardModal({ onClose, onCreate }) {
 
   useEffect(() => {
     if (memberInput.trim().length < 2) return;
-    
+
     const delayDebounceFn = setTimeout(async () => {
       try {
         const results = await apiSearchUsers(memberInput, authToken);
@@ -236,17 +236,32 @@ export default function Home() {
 
   const userBoards = boards.filter(b => b.members.includes(currentUser));
 
-  const handleAcceptInvite = (invite) => {
-    setBoards(prev => prev.map(b =>
-      b.id === invite.boardId && !b.members.includes(currentUser)
-        ? { ...b, members: [...b.members, currentUser] }
-        : b
-    ));
-    setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
+  const handleAcceptInvite = async (invite) => {
+    try {
+      const res = await fetch(`/api/users/invites/${invite.boardId}/accept`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      if (!res.ok) throw new Error('Failed to accept invite');
+      const { data: newBoard } = await res.json();
+      setBoards(prev => [...prev, newBoard]);
+      setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
+    } catch (err) {
+      console.error('Failed to accept invite', err);
+      alert('Could not accept invite. Please try again.');
+    }
   };
 
-  const handleDeclineInvite = (invite) => {
-    setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
+  const handleDeclineInvite = async (invite) => {
+    try {
+      await fetch(`/api/users/invites/${invite.boardId}/decline`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` },
+      });
+      setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
+    } catch (err) {
+      console.error('Failed to decline invite', err);
+    }
   };
 
   const handleCreateBoard = async (data) => {
@@ -566,17 +581,23 @@ export default function Home() {
                       {/* Members */}
                       <div className="flex items-center justify-between">
                         <div className="flex -space-x-2">
-                          {board.members.slice(0, 4).map(m => (
-                            <div
-                              key={m}
-                              className={`w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-xs font-bold ${m === currentUser ? `bg-gradient-to-br ${userAvatar.gradient}` : 'bg-gradient-to-br from-brand-400 to-brand-700'}`}
-                              title={m}
-                            >
-                              {m === currentUser
-                                ? <span style={{ fontSize: userAvatar.emoji ? '0.8rem' : '0.65rem' }}>{userAvatar.emoji ?? m.charAt(0).toUpperCase()}</span>
-                                : m.charAt(0).toUpperCase()}
-                            </div>
-                          ))}
+                          {board.members.slice(0, 4).map(m => {
+                            const profile = board.memberProfiles?.[m];
+                            const av = m === currentUser ? userAvatar : profile?.avatar;
+                            const gradient = av?.gradient ?? 'from-brand-400 to-brand-700';
+                            const emoji = av?.emoji;
+                            return (
+                              <div
+                                key={m}
+                                className={`w-7 h-7 rounded-full border-2 border-white dark:border-slate-800 flex items-center justify-center text-white text-xs font-bold bg-gradient-to-br ${gradient}`}
+                                title={m}
+                              >
+                                <span style={{ fontSize: emoji ? '0.8rem' : '0.65rem' }}>
+                                  {emoji ?? m.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                         <ArrowRight size={16} className="text-slate-300 dark:text-slate-600 group-hover:text-brand-500 group-hover:translate-x-1 transition-all" />
                       </div>

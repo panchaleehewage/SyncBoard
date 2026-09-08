@@ -14,7 +14,7 @@ export default function Navbar() {
     const handleLogout = () => {
         logout();
         setConfirmLogout(false);
-        navigate('/');
+        window.location.href = '/';
     };
 
     return (

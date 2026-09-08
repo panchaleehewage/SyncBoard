@@ -275,7 +275,11 @@ export default function Profile() {
                                             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">{task.title}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
-                                                    Due {task.dueDate}{isOverdue ? ' · Overdue' : ''}
+                                                    Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { 
+                                                    month: 'short', 
+                                                    day: 'numeric', 
+                                                    year: 'numeric' 
+                                                    }) : 'No due date'}{isOverdue ? ' · Overdue' : ''}
                                                 </span>
                                                 <span className="ml-auto text-xs px-2 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-slate-500 dark:text-slate-400">{task.status}</span>
                                             </div>

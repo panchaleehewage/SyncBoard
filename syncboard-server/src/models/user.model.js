@@ -6,8 +6,17 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   bio: { type: String, default: '' },
   avatar: { type: mongoose.Schema.Types.Mixed, default: null },
-  pendingInvites: { type: Array, default: [] }
+  pendingInvites: {
+    type: [{
+      boardId: { type: String, required: true },
+      boardTitle: { type: String, required: true },
+      invitedBy: { type: String, required: true },
+      _id: false,
+    }],
+    default: [],
+  }
 }, { timestamps: true });
+
 
 userSchema.set('toJSON', {
   transform: (doc, ret) => {

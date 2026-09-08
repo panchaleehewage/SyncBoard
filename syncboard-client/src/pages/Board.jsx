@@ -50,13 +50,13 @@ export default function Board() {
 
   useEffect(() => {
     if (!authToken) return;
-    
+
     getTasks(authToken).then(response => {
       const tasksArray = Array.isArray(response) ? response : (response.data || []);
-      
-      dispatch({ 
-        type: 'SET_TASKS', 
-        payload: tasksArray.filter(t => String(t.boardId) === String(boardId)) 
+
+      dispatch({
+        type: 'SET_TASKS',
+        payload: tasksArray.filter(t => String(t.boardId) === String(boardId))
       });
       setLoading(false);
     }).catch(err => {
@@ -242,7 +242,7 @@ export default function Board() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
 
       {/* Board Header */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-16 z-20">
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-3">
@@ -259,17 +259,23 @@ export default function Board() {
 
             <div className="flex items-center gap-2 flex-wrap">
               <div className="flex -space-x-2">
-                {board.members.slice(0, 4).map(m => (
-                  <div
-                    key={m}
-                    className={`w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold ${m === currentUser ? `bg-gradient-to-br ${userAvatar.gradient}` : 'bg-gradient-to-br from-brand-400 to-brand-700'}`}
-                    title={m}
-                  >
-                    {m === currentUser
-                      ? <span style={{ fontSize: userAvatar.emoji ? '0.85rem' : '0.7rem' }}>{userAvatar.emoji ?? m.charAt(0).toUpperCase()}</span>
-                      : m.charAt(0).toUpperCase()}
-                  </div>
-                ))}
+                {board.members.slice(0, 4).map(m => {
+                  const profile = board.memberProfiles?.[m];
+                  const av = m === currentUser ? userAvatar : profile?.avatar;
+                  const gradient = av?.gradient ?? 'from-brand-400 to-brand-700';
+                  const emoji = av?.emoji;
+                  return (
+                    <div
+                      key={m}
+                      className={`w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold bg-gradient-to-br ${gradient}`}
+                      title={m}
+                    >
+                      <span style={{ fontSize: emoji ? '0.85rem' : '0.7rem' }}>
+                        {emoji ?? m.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
 
               <button onClick={() => setTaskModal(true)} className="flex items-center gap-1.5 px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm">

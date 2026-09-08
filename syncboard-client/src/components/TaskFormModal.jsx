@@ -4,7 +4,7 @@ import ConfirmModal from './ConfirmModal';
 
 export default function TaskFormModal({ task, board, onClose, onSave }) {
     const [title, setTitle] = useState(task?.title || '');
-    const [dueDate, setDueDate] = useState(task?.dueDate || '');
+    const [dueDate, setDueDate] = useState(task?.dueDate ? task.dueDate.split('T')[0] : '');
     const [assignee, setAssignee] = useState(task?.assignee || (board?.members?.[0] || ''));
     const [tags, setTags] = useState(task?.tags || []);
     const [formError, setFormError] = useState('');
