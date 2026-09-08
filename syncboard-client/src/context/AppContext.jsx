@@ -1,4 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
 import { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { AVATAR_OPTIONS } from '../data/avatars';
 import { apiLogin, apiRegister, apiGetMe, apiUpdateMe } from '../api/auth.api';
@@ -42,7 +41,10 @@ export function AppProvider({ children }) {
 
     useEffect(() => {
         const token = localStorage.getItem(TOKEN_KEY);
-        if (!token) return;
+        if (!token) {
+            setAuthLoading(false);
+            return;
+        }
 
         apiGetMe(token)
             .then(({ user }) => hydrateUser(user, token))
@@ -50,7 +52,7 @@ export function AppProvider({ children }) {
                 clearUser();
             })
             .finally(() => setAuthLoading(false));
-    },);
+    }, [hydrateUser, clearUser]);
 
     useEffect(() => {
         if (!authToken) return;
