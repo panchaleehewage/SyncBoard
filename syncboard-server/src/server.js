@@ -28,13 +28,39 @@ io.use((socket, next) => {
     }
 });
 
-io.on("connection", (socket) => {
-    console.log("Socket connected:", socket.user.username);
+const presence = new Map();
 
+function announce(boardId) {
+    const users = [...(presence.get(boardId)?.keys() ?? [])];
+    io.to(`board:${boardId}`).emit("presence:update", users);
+}
+
+io.on("connection", (socket) => {
     socket.on("board:join", (boardId) => {
         if (typeof boardId !== "string" || !boardId.trim()) return;
         socket.join(`board:${boardId}`);
         console.log(`User ${socket.user.username} joined room: board:${boardId}`);
+
+        const board = presence.get(boardId) ?? new Map();
+        board.set(socket.user.username, (board.get(socket.user.username) ?? 0) + 1);
+        presence.set(boardId, board);
+        announce(boardId);
+    });
+
+    socket.on("disconnecting", () => {
+        for (const room of socket.rooms) {
+            if (!room.startsWith("board:")) continue;
+
+            const id = room.slice("board:".length);
+            const board = presence.get(id);
+            if (!board) continue;
+
+            const left = (board.get(socket.user.username) ?? 1) - 1;
+            if (left > 0) board.set(socket.user.username, left);
+            else board.delete(socket.user.username);
+
+            announce(id);
+        }
     });
 });
 
