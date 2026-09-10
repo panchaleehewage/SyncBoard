@@ -20,7 +20,9 @@ export const taskController = {
   createTask: asyncHandler(async (req, res) => {
     const newTask = await taskService.createTask(req.body, req.user);
     const io = req.app.get("io");
-    io?.to(`board:${task.boardId}`).emit("task:created", task);
+    
+    io?.to(`board:${newTask.boardId}`).emit("task:created", newTask);
+    
     res.status(201).json({ status: 'success', data: newTask });
   }),
 
@@ -28,7 +30,9 @@ export const taskController = {
     if (!isValidId(req.params.id)) throw new AppError('Task not found', 404);
     const updatedTask = await taskService.updateTask(req.params.id, req.body, req.user);
     const io = req.app.get("io");
-    io?.to(`board:${task.boardId}`).emit("task:updated", task); 
+    
+    io?.to(`board:${updatedTask.boardId}`).emit("task:updated", updatedTask); 
+    
     res.status(200).json({ status: 'success', data: updatedTask });
   }),
 

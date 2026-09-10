@@ -21,7 +21,12 @@ io.use((socket, next) => {
     if (!token) return next(new Error("NO_TOKEN"));
     try {
         const payload = jwt.verify(token, config.jwtSecret);
-        socket.user = { id: payload.sub || payload.id, username: payload.username };
+        
+        socket.user = { 
+            id: payload.sub || payload.id, 
+            username: payload.username || socket.handshake.auth?.username 
+        };
+        
         next();
     } catch {
         next(new Error("BAD_TOKEN"));

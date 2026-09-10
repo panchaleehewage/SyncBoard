@@ -12,6 +12,7 @@ import BoardSettingsModal from '../components/BoardSettingsModal';
 import ConfirmModal from '../components/ConfirmModal';
 import ProjectCompleteModal from '../components/ProjectCompleteModal';
 import { ArrowLeft, Plus, Settings, Trash2, Search, AlertTriangle, Filter, ShieldX } from 'lucide-react';
+import { io } from "socket.io-client";
 
 export default function Board() {
   const { boardId } = useParams();
@@ -48,6 +49,8 @@ export default function Board() {
 
   const tagColorMap = Object.fromEntries(boardTags.map(t => [t.label, t.color]));
 
+  const [onlineUsers, setOnlineUsers] = useState([]);
+
   useEffect(() => {
     if (!authToken) return;
 
@@ -64,6 +67,46 @@ export default function Board() {
       setLoading(false);
     });
   }, [boardId, authToken, dispatch]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('syncboard_token');
+    if (!token) return;
+
+    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:4000", {
+        auth: { 
+            token, 
+            username: currentUser
+        },
+    });
+
+    socket.on("connect", () => {
+        console.log("Socket connected:", socket.id);
+        socket.emit("board:join", boardId);
+    });
+
+    socket.on("connect_error", (err) => {
+        if (err.message === "BAD_TOKEN" || err.message === "NO_TOKEN") {
+            localStorage.removeItem('syncboard_token');
+            window.location.href = '/';
+        }
+    });
+
+    socket.on("task:created", (task) => {
+        dispatch({ type: 'ADD_TASK', payload: task });
+    });
+
+    socket.on("task:updated", (task) => {
+        dispatch({ type: 'EDIT_TASK', payload: task });
+    });
+
+    socket.on("presence:update", (users) => {
+        setOnlineUsers(users);
+    });
+
+    return () => {
+        socket.disconnect();
+    };
+  }, [boardId, dispatch]);
 
   if (!board) {
     return (
@@ -251,8 +294,18 @@ export default function Board() {
               </Link>
               <div>
                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">{board.title}</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {board.members.length} member{board.members.length !== 1 ? 's' : ''} · Leader: {board.leader}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-2">
+                  <span>{board.members.length} member{board.members.length !== 1 ? 's' : ''} · Leader: {board.leader}</span>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    {onlineUsers.filter(u => u !== currentUser).length > 0 
+                      ? `Online with: ${onlineUsers.filter(u => u !== currentUser).join(", ")}` 
+                      : "You are the only one here"}
+                  </span>
                 </p>
               </div>
             </div>
