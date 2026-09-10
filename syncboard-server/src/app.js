@@ -1,6 +1,4 @@
 import express from 'express';
-import AppError from './utils/AppError.js';
-import asyncHandler from './utils/asyncHandler.js';
 import { notFoundHandler, globalErrorHandler } from './middleware/error.middleware.js';
 import taskRoutes from './routes/task.routes.js';
 import authRoutes from './routes/auth.routes.js';
