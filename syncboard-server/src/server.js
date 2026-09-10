@@ -29,7 +29,13 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (socket) => {
-    console.log("Socket connected for user:", socket.user.username);
+    console.log("Socket connected:", socket.user.username);
+
+    socket.on("board:join", (boardId) => {
+        if (typeof boardId !== "string" || !boardId.trim()) return;
+        socket.join(`board:${boardId}`);
+        console.log(`User ${socket.user.username} joined room: board:${boardId}`);
+    });
 });
 
 await connectDB();
