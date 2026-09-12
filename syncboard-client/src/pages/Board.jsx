@@ -72,39 +72,36 @@ export default function Board() {
     const token = localStorage.getItem('syncboard_token');
     if (!token) return;
 
-    const socket = io(import.meta.env.VITE_API_URL || "http://localhost:4000", {
-        auth: { 
-            token, 
-            username: currentUser
-        },
+    const socket = io("/", {
+      auth: { token, username: currentUser },
     });
 
     socket.on("connect", () => {
-        console.log("Socket connected:", socket.id);
-        socket.emit("board:join", boardId);
+      console.log("Socket connected:", socket.id);
+      socket.emit("board:join", boardId);
     });
 
     socket.on("connect_error", (err) => {
-        if (err.message === "BAD_TOKEN" || err.message === "NO_TOKEN") {
-            localStorage.removeItem('syncboard_token');
-            window.location.href = '/';
-        }
+      if (err.message === "BAD_TOKEN" || err.message === "NO_TOKEN") {
+        localStorage.removeItem('syncboard_token');
+        window.location.href = '/';
+      }
     });
 
     socket.on("task:created", (task) => {
-        dispatch({ type: 'ADD_TASK', payload: task });
+      dispatch({ type: 'ADD_TASK', payload: task });
     });
 
     socket.on("task:updated", (task) => {
-        dispatch({ type: 'EDIT_TASK', payload: task });
+      dispatch({ type: 'EDIT_TASK', payload: task });
     });
 
     socket.on("presence:update", (users) => {
-        setOnlineUsers(users);
+      setOnlineUsers(users);
     });
 
     return () => {
-        socket.disconnect();
+      socket.disconnect();
     };
   }, [boardId, dispatch]);
 
@@ -302,8 +299,8 @@ export default function Board() {
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
-                    {onlineUsers.filter(u => u !== currentUser).length > 0 
-                      ? `Online with: ${onlineUsers.filter(u => u !== currentUser).join(", ")}` 
+                    {onlineUsers.filter(u => u !== currentUser).length > 0
+                      ? `Online with: ${onlineUsers.filter(u => u !== currentUser).join(", ")}`
                       : "You are the only one here"}
                   </span>
                 </p>
