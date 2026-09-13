@@ -4,8 +4,20 @@ function boardReducer(state, action) {
   switch (action.type) {
     case 'SET_TASKS':
       return { ...state, tasks: action.payload };
-    case 'ADD_TASK':
-      return { ...state, tasks: [...state.tasks, action.payload] };
+    case 'ADD_TASK': {
+      const taskExists = state.tasks.some(
+        (t) => t.id === action.payload.id || t._id === action.payload._id
+      );
+      
+      if (taskExists) {
+        return state;
+      }
+
+      return { 
+        ...state, 
+        tasks: [...state.tasks, action.payload] 
+      };
+    }
     case 'MOVE_TASK':
       return {
         ...state,
