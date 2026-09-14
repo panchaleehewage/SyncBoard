@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { mockUsers } from '../data/mockData';
 import { getTasks } from '../api/tasks';
 import { AVATAR_OPTIONS } from '../data/avatars';
-import { ArrowLeft, Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Save, Camera } from 'lucide-react';
+import { ArrowLeft, Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Save, Camera, Users, BarChart2 } from 'lucide-react';
 
 export default function Profile() {
     const { username } = useParams();
     const { currentUser, currentUserData, authToken, updateProfile, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
 
     const isOwnProfile = currentUser === username;
-    const profileData = isOwnProfile ? currentUserData : mockUsers.find(u => u.username === username);
+    const profileData = isOwnProfile ? currentUserData : null;
 
     const [editing, setEditing] = useState(false);
     const [name, setName] = useState(profileData?.username || username);
@@ -22,15 +21,40 @@ export default function Profile() {
     const [chosenAvatar, setChosenAvatar] = useState(() => userAvatar ?? AVATAR_OPTIONS[0]);
     const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
+    // ── Own profile: fetch tasks ──────────────────────────────────────────────
     const [realTasks, setRealTasks] = useState([]);
     const [tasksLoading, setTasksLoading] = useState(isOwnProfile && !!authToken);
     useEffect(() => {
         if (!isOwnProfile || !authToken) return;
-        
         getTasks(authToken)
             .then(res => { setRealTasks(res.data); setTasksLoading(false); })
             .catch(err => { console.error('Failed to fetch tasks for profile', err); setTasksLoading(false); });
     }, [isOwnProfile, authToken]);
+
+    // ── Public profile: fetch stats ───────────────────────────────────────────
+    const [publicStats, setPublicStats] = useState(null);
+    const [publicLoading, setPublicLoading] = useState(!isOwnProfile && !!authToken);
+    const [publicError, setPublicError] = useState(false);
+    useEffect(() => {
+        if (isOwnProfile || !authToken) return;
+        fetch(`/api/users/${username}`, {
+            headers: { Authorization: `Bearer ${authToken}` },
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Not found');
+                return res.json();
+            })
+            .then(json => {
+                setPublicStats(json.data);
+                setBio(json.data.bio || '');
+                const savedAvatar = json.data.avatar
+                    ? AVATAR_OPTIONS.find(a => a.id === json.data.avatar?.id) || null
+                    : null;
+                if (savedAvatar) setChosenAvatar(savedAvatar);
+                setPublicLoading(false);
+            })
+            .catch(() => { setPublicError(true); setPublicLoading(false); });
+    }, [isOwnProfile, authToken, username]);
 
     const userBoards = (boards || []).filter(b => b.members.includes(username));
     const upcomingTasks = (realTasks || [])
@@ -41,7 +65,6 @@ export default function Profile() {
     const handleSave = async () => {
         try {
             await updateProfile({ bio, avatar: chosenAvatar });
-
             setUserAvatar(chosenAvatar);
             setSaved(true);
             setEditing(false);
@@ -72,7 +95,27 @@ export default function Profile() {
         setPendingInvites(prev => prev.filter(i => i.boardId !== invite.boardId));
     };
 
-    if (!profileData) {
+    // Loading / error states for public profiles
+    if (!isOwnProfile && publicLoading) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
+    if (!isOwnProfile && publicError) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-slate-500 dark:text-slate-400 mb-4">User not found.</p>
+                    <Link to="/" className="text-brand-600 dark:text-brand-400 text-sm font-medium hover:underline">← Back to Dashboard</Link>
+                </div>
+            </div>
+        );
+    }
+
+    if (isOwnProfile && !profileData) {
         return (
             <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
                 <p className="text-slate-500 dark:text-slate-400">User not found.</p>
@@ -97,7 +140,7 @@ export default function Profile() {
                     <div className="flex items-start justify-between flex-wrap gap-4">
                         <div className="flex items-center gap-5">
 
-                            {/* Editable Avatar */}
+                            {/* Avatar */}
                             <div className="relative group">
                                 <div
                                     className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${chosenAvatar.gradient} flex items-center justify-center text-white shadow-lg select-none`}
@@ -106,7 +149,6 @@ export default function Profile() {
                                     {chosenAvatar.emoji ?? username.charAt(0).toUpperCase()}
                                 </div>
 
-                                {/* Camera overlay — only visible in edit mode */}
                                 {isOwnProfile && editing && (
                                     <button
                                         onClick={() => setAvatarPickerOpen(p => !p)}
@@ -117,7 +159,6 @@ export default function Profile() {
                                     </button>
                                 )}
 
-                                {/* Avatar picker dropdown */}
                                 {avatarPickerOpen && editing && (
                                     <div className="absolute left-0 top-[calc(100%+8px)] z-30 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-3 w-52">
                                         <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 px-1">Choose an avatar</p>
@@ -147,7 +188,7 @@ export default function Profile() {
                                         placeholder="Your name"
                                     />
                                 ) : (
-                                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{name}</h1>
+                                    <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{isOwnProfile ? name : username}</h1>
                                 )}
                                 <p className="text-brand-600 dark:text-brand-400 text-sm font-medium">@{username}</p>
                             </div>
@@ -180,21 +221,23 @@ export default function Profile() {
                     )}
 
                     <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                                <Mail size={12} /> Email
-                            </label>
-                            {editing ? (
-                                <input value={email} onChange={e => setEmail(e.target.value)} type="email" className={inputClass} placeholder="your@email.com" />
-                            ) : (
-                                <p className="text-sm text-slate-700 dark:text-slate-300">{email || '—'}</p>
-                            )}
-                        </div>
+                        {isOwnProfile && (
+                            <div>
+                                <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                                    <Mail size={12} /> Email
+                                </label>
+                                {editing ? (
+                                    <input value={email} onChange={e => setEmail(e.target.value)} type="email" className={inputClass} placeholder="your@email.com" />
+                                ) : (
+                                    <p className="text-sm text-slate-700 dark:text-slate-300">{email || '—'}</p>
+                                )}
+                            </div>
+                        )}
                         <div>
                             <label className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                                 <FileText size={12} /> Bio
                             </label>
-                            {editing ? (
+                            {isOwnProfile && editing ? (
                                 <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} className={`${inputClass} resize-none`} placeholder="Tell your team about yourself..." />
                             ) : (
                                 <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{bio || 'No bio yet.'}</p>
@@ -203,7 +246,7 @@ export default function Profile() {
                     </div>
                 </div>
 
-                {/* Pending Invites */}
+                {/* ── Pending Invites (own profile only) ───────────────────────────────── */}
                 {isOwnProfile && pendingInvites.length > 0 && (
                     <div className={sectionClass}>
                         <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
@@ -232,69 +275,87 @@ export default function Profile() {
                     </div>
                 )}
 
-                <div className="grid sm:grid-cols-2 gap-6">
-                    {/* Boards */}
-                    <div className={sectionClass}>
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Layout size={16} className="text-brand-500" />
-                            Boards
-                            <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-semibold ml-auto">{userBoards.length}</span>
-                        </h2>
-                        {userBoards.length === 0 ? (
-                            <p className="text-sm text-slate-400">No boards yet.</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {userBoards.map(board => (
-                                    <Link key={board.id} to={`/board/${board.id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
-                                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
-                                            {board.title.charAt(0)}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{board.title}</p>
-                                            <p className="text-xs text-slate-400 dark:text-slate-500">{board.members.length} members · {board.leader === username ? 'Leader' : 'Member'}</p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Upcoming Tasks */}
-                    <div className={sectionClass}>
-                        <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                            <Calendar size={16} className="text-amber-500" />
-                            Upcoming Tasks
-                        </h2>
-                        {tasksLoading ? (
-                            <div className="flex items-center justify-center py-6">
-                                <div className="animate-spin w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full" />
-                            </div>
-                        ) : upcomingTasks.length === 0 ? (
-                            <p className="text-sm text-slate-400">No upcoming tasks.</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {upcomingTasks.map(task => {
-                                    const isOverdue = new Date(task.dueDate) < new Date();
-                                    return (
-                                        <div key={task.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700">
-                                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">{task.title}</p>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
-                                                    Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { 
-                                                    month: 'short', 
-                                                    day: 'numeric', 
-                                                    year: 'numeric' 
-                                                    }) : 'No due date'}{isOverdue ? ' · Overdue' : ''}
-                                                </span>
-                                                <span className="ml-auto text-xs px-2 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-slate-500 dark:text-slate-400">{task.status}</span>
+                {/* ── Own profile: Boards + Upcoming Tasks ─────────────────────────────── */}
+                {isOwnProfile && (
+                    <div className="grid sm:grid-cols-2 gap-6">
+                        <div className={sectionClass}>
+                            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <Layout size={16} className="text-brand-500" />
+                                Boards
+                                <span className="px-2 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-full text-xs font-semibold ml-auto">{userBoards.length}</span>
+                            </h2>
+                            {userBoards.length === 0 ? (
+                                <p className="text-sm text-slate-400">No boards yet.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {userBoards.map(board => (
+                                        <Link key={board.id} to={`/board/${board.id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors group">
+                                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                                                {board.title.charAt(0)}
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{board.title}</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500">{board.members.length} members · {board.leader === username ? 'Leader' : 'Member'}</p>
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className={sectionClass}>
+                            <h2 className="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                                <Calendar size={16} className="text-amber-500" />
+                                Upcoming Tasks
+                            </h2>
+                            {tasksLoading ? (
+                                <div className="flex items-center justify-center py-6">
+                                    <div className="animate-spin w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full" />
+                                </div>
+                            ) : upcomingTasks.length === 0 ? (
+                                <p className="text-sm text-slate-400">No upcoming tasks.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {upcomingTasks.map(task => {
+                                        const isOverdue = new Date(task.dueDate) < new Date();
+                                        return (
+                                            <div key={task.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-700/50 border border-slate-100 dark:border-slate-700">
+                                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 leading-snug">{task.title}</p>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className={`text-xs ${isOverdue ? 'text-red-500 font-medium' : 'text-slate-400 dark:text-slate-500'}`}>
+                                                        Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'No due date'}{isOverdue ? ' · Overdue' : ''}
+                                                    </span>
+                                                    <span className="ml-auto text-xs px-2 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-full text-slate-500 dark:text-slate-400">{task.status}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
+
+                {/* ── Public profile: Stats ─────────────────────────────────────────────── */}
+                {!isOwnProfile && publicStats && (
+                    <div className="grid sm:grid-cols-2 gap-6">
+                        <div className={`${sectionClass} flex flex-col items-center justify-center text-center gap-3 py-10`}>
+                            <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                                <CheckCircle size={26} className="text-emerald-600 dark:text-emerald-400" />
+                            </div>
+                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{publicStats.tasksCompleted}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tasks Completed</p>
+                        </div>
+
+                        <div className={`${sectionClass} flex flex-col items-center justify-center text-center gap-3 py-10`}>
+                            <div className="w-14 h-14 rounded-2xl bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                                <Users size={26} className="text-brand-600 dark:text-brand-400" />
+                            </div>
+                            <p className="text-4xl font-extrabold text-slate-900 dark:text-white">{publicStats.boardsCount}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Boards Collaborating On</p>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { useApp } from './context/AppContext';
 import Navbar from './components/Navbar';
 import AuthModal from './components/AuthModal';
@@ -9,7 +10,9 @@ import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import './App.css';
 
-export default function App() {
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+function AppRoutes() {
   const { authLoading } = useApp();
 
   if (authLoading) {
@@ -48,4 +51,15 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+export default function App() {
+  if (GOOGLE_CLIENT_ID) {
+    return (
+      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        <AppRoutes />
+      </GoogleOAuthProvider>
+    );
+  }
+  return <AppRoutes />;
 }

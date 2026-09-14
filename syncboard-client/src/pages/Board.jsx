@@ -7,7 +7,6 @@ import { getTasks } from '../api/tasks';
 import Column from '../components/Column';
 import TaskCard from '../components/TaskCard';
 import TaskFormModal from '../components/TaskFormModal';
-import TaskDetailModal from '../components/TaskDetailModal';
 import BoardSettingsModal from '../components/BoardSettingsModal';
 import ConfirmModal from '../components/ConfirmModal';
 import ProjectCompleteModal from '../components/ProjectCompleteModal';
@@ -39,7 +38,6 @@ export default function Board() {
 
   const [taskModal, setTaskModal] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
-  const [detailTask, setDetailTask] = useState(null);
   const [settingsModal, setSettingsModal] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [projectComplete, setProjectComplete] = useState(false);
@@ -315,15 +313,16 @@ export default function Board() {
                   const gradient = av?.gradient ?? 'from-brand-400 to-brand-700';
                   const emoji = av?.emoji;
                   return (
-                    <div
+                    <Link
                       key={m}
-                      className={`w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold bg-gradient-to-br ${gradient}`}
+                      to={`/profile/${m}`}
                       title={m}
+                      className={`w-8 h-8 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-white text-xs font-bold bg-gradient-to-br ${gradient} hover:scale-110 transition-transform`}
                     >
                       <span style={{ fontSize: emoji ? '0.85rem' : '0.7rem' }}>
                         {emoji ?? m.charAt(0).toUpperCase()}
                       </span>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -402,7 +401,7 @@ export default function Board() {
                         columnColor={col.color}
                         tagColorMap={tagColorMap}
                         onDelete={handleDeleteTask}
-                        onOpenDetail={setDetailTask}
+                        onEdit={setEditingTask}
                       />
                     ))}
                   </Column>
@@ -416,7 +415,6 @@ export default function Board() {
       {/* ── Modals ─────────────────────────────────────────────────────────────── */}
       {taskModal && <TaskFormModal board={{ ...board, tags: boardTags }} columns={columns} onClose={() => setTaskModal(false)} onSave={handleAddTask} />}
       {editingTask && <TaskFormModal task={editingTask} board={{ ...board, tags: boardTags }} columns={columns} onClose={() => setEditingTask(null)} onSave={handleEditTask} />}
-      {detailTask && <TaskDetailModal task={detailTask} tagColorMap={tagColorMap} onClose={() => setDetailTask(null)} onEdit={(t) => { setDetailTask(null); setEditingTask(t); }} onDelete={handleDeleteTask} />}
       {settingsModal && <BoardSettingsModal title={board.title} members={board.members} columns={columns} tags={boardTags} onSave={handleSaveSettings} onClose={() => setSettingsModal(false)} />}
       {confirmDelete && <ConfirmModal title="Delete Board?" message={`Permanently delete "${board.title}"? This cannot be undone.`} confirmLabel="Delete Board" onConfirm={handleDeleteBoard} onClose={() => setConfirmDelete(false)} />}
       {confirmDeleteTaskId && <ConfirmModal title="Delete Task?" message="This task will be permanently removed. This cannot be undone." confirmLabel="Delete Task" onConfirm={() => executeDeleteTask(confirmDeleteTaskId)} onClose={() => setConfirmDeleteTaskId(null)} />}

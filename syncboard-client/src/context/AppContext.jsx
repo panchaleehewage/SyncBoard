@@ -10,11 +10,11 @@ export function AppProvider({ children }) {
     const [currentUser, setCurrentUser] = useState(null);
     const [authToken, setAuthToken] = useState(() => localStorage.getItem(TOKEN_KEY));
     const [currentUserData, setCurrentUserData] = useState(null);
-    const [authLoading, setAuthLoading] = useState(!!localStorage.getItem(TOKEN_KEY)); 
+    const [authLoading, setAuthLoading] = useState(!!localStorage.getItem(TOKEN_KEY));
 
     const [boards, setBoards] = useState([]);
     const [pendingInvites, setPendingInvites] = useState([]);
-    const [authModal, setAuthModal] = useState(null); 
+    const [authModal, setAuthModal] = useState(null);
 
     const [userAvatar, setUserAvatar] = useState(AVATAR_OPTIONS[0]);
 
@@ -104,6 +104,7 @@ export function AppProvider({ children }) {
             authToken,
             authLoading,
             login, register, logout, updateProfile,
+            hydrateUser,
             // Board
             boards, setBoards,
             pendingInvites, setPendingInvites,

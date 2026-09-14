@@ -8,6 +8,9 @@ const router = Router();
 // GET /api/users?search=query — search users by username (authenticated)
 router.get('/', protect, userController.searchUsers);
 
+// GET /api/users/:username — get public profile stats for a user
+router.get('/:username', protect, userController.getProfile);
+
 // POST /api/users/invites/:boardId/accept  — accept a board invite
 // POST /api/users/invites/:boardId/decline — decline a board invite
 router.post('/invites/:boardId/accept', protect, inviteController.acceptInvite);

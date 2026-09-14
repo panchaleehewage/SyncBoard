@@ -4,11 +4,10 @@ import { X, Calendar, User, AlertTriangle } from 'lucide-react';
 import { getBgClass, getTagClasses } from '../data/colors';
 import ConfirmModal from './ConfirmModal';
 
-export default function TaskCard({ task, index, columnIndex, totalColumns, columnColor, tagColorMap, onDelete, onOpenDetail }) {
+export default function TaskCard({ task, index, columnIndex, totalColumns, columnColor, tagColorMap, onDelete, onEdit }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const isOverdue = new Date(task.dueDate) < new Date() && columnIndex !== totalColumns - 1;
-
   const stripColor = isOverdue ? 'bg-red-500' : getBgClass(columnColor);
 
   return (
@@ -19,7 +18,7 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            onClick={() => onOpenDetail(task)}
+            onClick={() => onEdit(task)}
             className={`
               group relative overflow-hidden rounded-xl
               border border-slate-200 dark:border-slate-600/70
@@ -55,10 +54,10 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
             <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 mb-3">
               <Calendar size={12} />
               <span>
-                Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', { 
-                  month: 'short', 
-                  day: 'numeric', 
-                  year: 'numeric' 
+                Due {task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
                 }) : 'No due date'}
               </span>
             </div>

@@ -10,6 +10,10 @@ export const userRepository = {
     return await User.findOne({ username });
   },
 
+  async findOne(query) {
+    return await User.findOne(query);
+  },
+
   async findById(id) {
     return await User.findById(id);
   },
@@ -33,7 +37,7 @@ export const userRepository = {
     const q = (query || '').toLowerCase();
     return await User.find({
       _id: { $ne: excludeId },
-      username: { $regex: q, $options: 'i' } 
+      username: { $regex: q, $options: 'i' }
     });
   }
 };
