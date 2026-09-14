@@ -102,6 +102,11 @@ export default function Board() {
       setBoards(prev => prev.map(b => b.id === updatedBoard.id ? updatedBoard : b));
     });
 
+    socket.on("board:deleted", () => {
+      alert("This board was deleted by the leader.");
+      navigate("/");
+    });
+
     socket.on("presence:update", (users) => {
       setOnlineUsers(users);
     });
@@ -231,16 +236,25 @@ export default function Board() {
   };
 
   const executeDeleteTask = async (id) => {
+    const backupTask = tasks.find(t => t.id === id || t._id === id);
     dispatch({ type: 'DELETE_TASK', payload: id });
-    setDetailTask(null);
     setConfirmDeleteTaskId(null);
     try {
-      await fetch(`/api/tasks/${id}`, {
+      console.log('Attempting to delete task ID:', id);
+      const res = await fetch(`/api/tasks/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${authToken}` },
       });
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Server returned ${res.status}: ${errorText}`);
+      }
     } catch (err) {
       console.error('Failed to delete task on server', err);
+      if (backupTask) {
+        dispatch({ type: 'ADD_TASK', payload: backupTask });
+        alert('Task deletion failed. It has been restored.');
+      }
     }
   };
 

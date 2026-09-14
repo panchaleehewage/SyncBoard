@@ -55,6 +55,20 @@ export function AppProvider({ children }) {
     }, [hydrateUser, clearUser]);
 
     useEffect(() => {
+        if (!authToken || !currentUser) return;
+        import("socket.io-client").then(({ io }) => {
+            const socket = io("/", { auth: { token: authToken, username: currentUser } });
+            socket.on("invite:received", (invite) => {
+                setPendingInvites(prev => [...prev, invite]);
+            });
+            socket.on("board:deleted", (deletedId) => {
+                setBoards(prev => prev.filter(b => b.id !== deletedId && b._id !== deletedId));
+            });
+            return () => socket.disconnect();
+        });
+    }, [authToken, currentUser]);
+
+    useEffect(() => {
         if (!authToken) return;
         fetch('/api/boards', {
             headers: { Authorization: `Bearer ${authToken}` }

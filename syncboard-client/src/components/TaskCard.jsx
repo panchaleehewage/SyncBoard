@@ -26,7 +26,7 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
             <div className={`absolute left-0 inset-y-0 w-[4px] ${stripColor} transition-colors duration-200`} />
 
             <button
-              onClick={e => { e.stopPropagation(); onDelete(task.id); }}
+              onClick={e => { e.stopPropagation(); onDelete(task.id ?? task._id); }}
               className="absolute top-2.5 right-2.5 p-1 rounded-md text-slate-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all duration-150"
             >
               <X size={14} />

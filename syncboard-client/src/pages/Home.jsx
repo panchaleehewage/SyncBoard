@@ -8,7 +8,7 @@ import ConfirmModal from '../components/ConfirmModal';
 import Modal from '../components/Modal';
 import {
   Plus, Layers, ArrowRight, Users, CheckCircle2, BarChart3,
-  Zap, X, Search, ChevronRight
+  Zap, X, Search, ChevronRight, Trash2
 } from 'lucide-react';
 
 function SwatchPicker({ selected, onSelect }) {
@@ -547,9 +547,9 @@ export default function Home() {
                     {isLeader && (
                       <button
                         onClick={e => { e.stopPropagation(); setConfirmDeleteId(board.id); }}
-                        className="absolute top-3 right-3 p-1.5 opacity-0 group-hover:opacity-100 text-white/70 hover:text-white hover:bg-white/20 rounded-md transition-all z-10"
+                        className="absolute top-3 right-3 p-1.5 opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-slate-700 rounded-md transition-all z-10"
                       >
-                        <X size={14} />
+                        <Trash2 size={14} />
                       </button>
                     )}
 

@@ -21,12 +21,12 @@ io.use((socket, next) => {
     if (!token) return next(new Error("NO_TOKEN"));
     try {
         const payload = jwt.verify(token, config.jwtSecret);
-        
-        socket.user = { 
-            id: payload.sub || payload.id, 
-            username: payload.username || socket.handshake.auth?.username 
+
+        socket.user = {
+            id: payload.sub || payload.id,
+            username: payload.username || socket.handshake.auth?.username
         };
-        
+
         next();
     } catch {
         next(new Error("BAD_TOKEN"));
@@ -41,6 +41,8 @@ function announce(boardId) {
 }
 
 io.on("connection", (socket) => {
+    socket.join(`user:${socket.user.username}`);
+
     socket.on("board:join", (boardId) => {
         if (typeof boardId !== "string" || !boardId.trim()) return;
         socket.join(`board:${boardId}`);
@@ -72,5 +74,5 @@ io.on("connection", (socket) => {
 await connectDB();
 
 httpServer.listen(config.port, () => {
-  console.log(`Syncboard Server running in ${config.env} mode on port ${config.port}...`);
+    console.log(`Syncboard Server running in ${config.env} mode on port ${config.port}...`);
 });

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { getTasks } from '../api/tasks';
 import { AVATAR_OPTIONS } from '../data/avatars';
@@ -7,6 +7,7 @@ import { ArrowLeft, Mail, FileText, Calendar, Layout, CheckCircle, X, Edit2, Sav
 
 export default function Profile() {
     const { username } = useParams();
+    const navigate = useNavigate();
     const { currentUser, currentUserData, authToken, updateProfile, boards, pendingInvites, setPendingInvites, setBoards, userAvatar, setUserAvatar } = useApp();
 
     const isOwnProfile = currentUser === username;
@@ -130,9 +131,9 @@ export default function Profile() {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-6">
                 <div className="mb-2">
-                    <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
-                        <ArrowLeft size={18} /> Back to Dashboard
-                    </Link>
+                    <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">
+                        <ArrowLeft size={18} /> Back
+                    </button>
                 </div>
 
                 {/* Profile Card */}

@@ -13,7 +13,7 @@ const buildMemberProfiles = async (boards) => {
   return Object.fromEntries(users.map(u => [u.username, { avatar: u.avatar ?? null }]));
 };
 
-const sendInvites = async ({ boardId, boardTitle, invitedBy, targetUsernames }) => {
+const sendInvites = async (req, { boardId, boardTitle, invitedBy, targetUsernames }) => {
   if (!targetUsernames.length) return;
   await User.updateMany(
     {
@@ -26,6 +26,11 @@ const sendInvites = async ({ boardId, boardTitle, invitedBy, targetUsernames }) 
       },
     }
   );
+
+  const io = req.app.get('io');
+  targetUsernames.forEach(username => {
+    io?.to(`user:${username}`).emit('invite:received', { boardId, boardTitle, invitedBy });
+  });
 };
 
 export const boardController = {
@@ -58,7 +63,7 @@ export const boardController = {
     const newBoard = await boardRepository.create({ title, columns, tags, members: [leader], leader });
 
     if (invitees.length > 0) {
-      await sendInvites({
+      await sendInvites(req, {
         boardId: newBoard.id,
         boardTitle: newBoard.title,
         invitedBy: leader,
@@ -89,7 +94,7 @@ export const boardController = {
 
       const newInvitees = incomingMembers.filter(m => !currentMembers.includes(m));
       if (newInvitees.length > 0) {
-        await sendInvites({
+        await sendInvites(req, {
           boardId: board.id,
           boardTitle: board.title,
           invitedBy: req.user.username,
@@ -118,6 +123,15 @@ export const boardController = {
       throw new AppError('Forbidden: Only the board leader can delete this board', 403);
     }
     await boardRepository.delete(req.params.id);
+
+    const io = req.app.get("io");
+    io?.to(`board:${req.params.id}`).emit("board:deleted", req.params.id);
+    if (board.members) {
+      board.members.forEach(member => {
+        io?.to(`user:${member}`).emit("board:deleted", req.params.id);
+      });
+    }
+
     res.status(204).send();
   }),
 };
