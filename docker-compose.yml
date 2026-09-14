@@ -13,6 +13,7 @@ services:
       MONGODB_URI: mongodb://mongo:27017/syncboard
       JWT_SECRET: ${JWT_SECRET}
       CLIENT_ORIGIN: http://localhost:9090
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     depends_on: 
       mongo: 
         condition: service_healthy
