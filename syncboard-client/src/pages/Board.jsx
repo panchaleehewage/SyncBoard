@@ -94,6 +94,14 @@ export default function Board() {
       dispatch({ type: 'EDIT_TASK', payload: task });
     });
 
+    socket.on("task:deleted", (deletedTaskId) => {
+      dispatch({ type: 'DELETE_TASK', payload: deletedTaskId });
+    });
+
+    socket.on("board:updated", (updatedBoard) => {
+      setBoards(prev => prev.map(b => b.id === updatedBoard.id ? updatedBoard : b));
+    });
+
     socket.on("presence:update", (users) => {
       setOnlineUsers(users);
     });

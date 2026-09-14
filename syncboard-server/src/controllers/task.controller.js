@@ -18,27 +18,36 @@ export const taskController = {
   }),
 
   createTask: asyncHandler(async (req, res) => {
-    const newTask = await taskService.createTask(req.body, req.user);
+    let newTask = await taskService.createTask(req.body, req.user);
+    if (newTask.toJSON) newTask = newTask.toJSON();
     const io = req.app.get("io");
-    
+
     io?.to(`board:${newTask.boardId}`).emit("task:created", newTask);
-    
+
     res.status(201).json({ status: 'success', data: newTask });
   }),
 
   updateTask: asyncHandler(async (req, res) => {
     if (!isValidId(req.params.id)) throw new AppError('Task not found', 404);
-    const updatedTask = await taskService.updateTask(req.params.id, req.body, req.user);
+    let updatedTask = await taskService.updateTask(req.params.id, req.body, req.user);
+    if (updatedTask.toJSON) updatedTask = updatedTask.toJSON();
     const io = req.app.get("io");
-    
-    io?.to(`board:${updatedTask.boardId}`).emit("task:updated", updatedTask); 
-    
+
+    io?.to(`board:${updatedTask.boardId}`).emit("task:updated", updatedTask);
+
     res.status(200).json({ status: 'success', data: updatedTask });
   }),
 
   deleteTask: asyncHandler(async (req, res) => {
     if (!isValidId(req.params.id)) throw new AppError('Task not found', 404);
+    const task = await taskService.getTaskById(req.params.id, req.user);
+    if (!task) throw new AppError('Task not found', 404);
+
     await taskService.deleteTask(req.params.id, req.user);
+
+    const io = req.app.get("io");
+    io?.to(`board:${task.boardId}`).emit("task:deleted", req.params.id);
+
     res.status(204).send();
   })
 };

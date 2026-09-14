@@ -2,11 +2,7 @@ import { useState } from 'react';
 import { Draggable } from '@hello-pangea/dnd';
 import { X, Calendar, User, AlertTriangle } from 'lucide-react';
 import { getBgClass, getTagClasses } from '../data/colors';
-import ConfirmModal from './ConfirmModal';
-
 export default function TaskCard({ task, index, columnIndex, totalColumns, columnColor, tagColorMap, onDelete, onEdit }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
   const isOverdue = new Date(task.dueDate) < new Date() && columnIndex !== totalColumns - 1;
   const stripColor = isOverdue ? 'bg-red-500' : getBgClass(columnColor);
 
@@ -30,7 +26,7 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
             <div className={`absolute left-0 inset-y-0 w-[4px] ${stripColor} transition-colors duration-200`} />
 
             <button
-              onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}
+              onClick={e => { e.stopPropagation(); onDelete(task.id); }}
               className="absolute top-2.5 right-2.5 p-1 rounded-md text-slate-300 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 opacity-0 group-hover:opacity-100 transition-all duration-150"
             >
               <X size={14} />
@@ -77,16 +73,6 @@ export default function TaskCard({ task, index, columnIndex, totalColumns, colum
           </div>
         )}
       </Draggable>
-
-      {confirmDelete && (
-        <ConfirmModal
-          title="Delete Task?"
-          message={`Are you sure you want to delete "${task.title}"? This cannot be undone.`}
-          confirmLabel="Delete"
-          onConfirm={() => { onDelete(task.id); setConfirmDelete(false); }}
-          onClose={() => setConfirmDelete(false)}
-        />
-      )}
     </>
   );
 }
